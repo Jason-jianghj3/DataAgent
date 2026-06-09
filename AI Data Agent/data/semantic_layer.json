@@ -1,0 +1,1263 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "generated_at": "2026-05-18",
+    "source": "report_config.json + SQL template analysis",
+    "description": "帆软报表数据智能总结播报 - 语义层配置",
+    "connections": {
+      "EAM": "设备管理/工单效能数据库",
+      "WMS_PROD": "仓储管理系统(生产环境)",
+      "ekp": "ERP库存数据"
+    }
+  },
+  "indicators": [
+    {
+      "id": "IND-001",
+      "name": "工单数量",
+      "aliases": [
+        "工单数",
+        "单量",
+        "总单数",
+        "处理量"
+      ],
+      "field_expr": "COUNT(DISTINCT RECCODE+'|'+RECFLOCODE)",
+      "type": "quantity",
+      "unit": "条",
+      "datasets": [
+        "关键指标汇总（区块一）",
+        "各部门工单处理情况（区块二）",
+        "工单数量统计（区块三）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "IND-002",
+      "name": "审批数量",
+      "aliases": [
+        "完成数",
+        "处理数",
+        "节点数"
+      ],
+      "field_expr": "COUNT(0)",
+      "type": "quantity",
+      "unit": "次",
+      "datasets": [
+        "部门人均效能（区块四）",
+        "处理时长分布图（区块三）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "IND-003",
+      "name": "总耗时",
+      "aliases": [
+        "累计耗时",
+        "总处理时间",
+        "总用时"
+      ],
+      "field_expr": "SUM(ProcessDays)",
+      "type": "duration_days",
+      "unit": "天",
+      "datasets": [
+        "关键指标汇总（区块一）",
+        "各部门工单处理情况（区块二）",
+        "部门人均效能（区块四）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "IND-004",
+      "name": "平均耗时",
+      "aliases": [
+        "平均处理时间",
+        "平均用时",
+        "人均耗时",
+        "均耗"
+      ],
+      "field_expr": "AVG(ProcessDays)",
+      "type": "duration_avg",
+      "unit": "天",
+      "datasets": [
+        "关键指标汇总（区块一）",
+        "各部门工单处理情况（区块二）",
+        "部门人均效能（区块四）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "IND-005",
+      "name": "处理人数",
+      "aliases": [
+        "参与人数",
+        "操作人数",
+        "涉及人员"
+      ],
+      "field_expr": "COUNT(DISTINCT CREATEDBY)",
+      "type": "quantity",
+      "unit": "人",
+      "datasets": [
+        "关键指标汇总（区块一）",
+        "各部门工单处理情况（区块二）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "IND-006",
+      "name": "人均工单",
+      "aliases": [
+        "人均处理量",
+        "人效",
+        "效率比"
+      ],
+      "field_expr": "工单数量/NULLIF(处理人数,0)",
+      "type": "ratio",
+      "unit": "条/人",
+      "datasets": [
+        "关键指标汇总（区块一）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "IND-007",
+      "name": "效能区间",
+      "aliases": [
+        "效率等级",
+        "速度等级",
+        "处理等级"
+      ],
+      "field_expr": "CASE WHEN AVG(ProcessDays)<=0.125 THEN '极速处理' WHEN AVG(ProcessDays)<=1 THEN '快速处理' WHEN AVG(ProcessDays)<=5 THEN '正常处理' WHEN AVG(ProcessDays)<=10 THEN '较慢处理' WHEN AVG(ProcessDays)<=30 THEN '滞后处理' WHEN AVG(ProcessDays)<=90 THEN '严重滞后' ELSE '超长滞留' END",
+      "type": "category",
+      "enum_values": [
+        "极速处理",
+        "快速处理",
+        "正常处理",
+        "较慢处理",
+        "滞后处理",
+        "严重滞后",
+        "超长滞留",
+        "未知"
+      ],
+      "datasets": [
+        "关键指标汇总（区块一）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "IND-008",
+      "name": "个人总耗时",
+      "aliases": [
+        "员工总耗时",
+        "个人用时"
+      ],
+      "field_expr": "SUM(ProcessDays)",
+      "type": "duration_days",
+      "unit": "天",
+      "datasets": [
+        "部门人均效能（区块四）"
+      ],
+      "connection": "EAM",
+      "granularity": "employee"
+    },
+    {
+      "id": "IND-009",
+      "name": "个人平均耗时",
+      "aliases": [
+        "员工平均耗时",
+        "个人均耗"
+      ],
+      "field_expr": "AVG(ProcessDays)",
+      "type": "duration_avg",
+      "unit": "天",
+      "datasets": [
+        "部门人均效能（区块四）"
+      ],
+      "connection": "EAM",
+      "granularity": "employee"
+    },
+    {
+      "id": "IND-010",
+      "name": "完成状态工单数",
+      "aliases": [
+        "已完成数",
+        "未完成数",
+        "完成率基数"
+      ],
+      "field_expr": "COUNT(DISTINCT wfscode+'|'+WFSFLOCODE)",
+      "type": "quantity",
+      "unit": "条",
+      "datasets": [
+        "工单完成情况"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "IND-011",
+      "name": "呆滞物料数量",
+      "aliases": [
+        "呆滞量",
+        "积压量"
+      ],
+      "field_expr": "SUM(illi.qty)",
+      "type": "quantity",
+      "unit": "",
+      "datasets": [
+        "呆滞物料明细"
+      ],
+      "connection": "WMS_PROD"
+    },
+    {
+      "id": "IND-012",
+      "name": "近效期物料数量",
+      "aliases": [
+        "近效期量",
+        "临期量"
+      ],
+      "field_expr": "sum(illi.qty)",
+      "type": "quantity",
+      "unit": "",
+      "datasets": [
+        "近效期数据"
+      ],
+      "connection": "WMS_PROD"
+    },
+    {
+      "id": "IND-013",
+      "name": "ERP库存总数",
+      "aliases": [
+        "ERP总量",
+        "系统库存"
+      ],
+      "field_expr": "SUM(QTY)",
+      "type": "quantity",
+      "unit": "",
+      "datasets": [
+        "erp库存总数"
+      ],
+      "connection": "ekp"
+    },
+    {
+      "id": "IND-014",
+      "name": "WMS库存总数",
+      "aliases": [
+        "WMS总量",
+        "实物库存"
+      ],
+      "field_expr": "sum(fmQty)",
+      "type": "quantity",
+      "unit": "",
+      "datasets": [
+        "wms库存总数"
+      ],
+      "connection": "WMS_PROD"
+    },
+    {
+      "id": "IND-015",
+      "name": "到岗人数",
+      "aliases": [
+        "登录人数",
+        "在线人数"
+      ],
+      "field_expr": "COUNT(DISTINCT userName)",
+      "type": "quantity",
+      "unit": "人",
+      "datasets": [
+        "ds1(到岗人数)"
+      ],
+      "connection": "WMS_PROD"
+    }
+  ],
+  "dimensions": [
+    {
+      "id": "DIM-001",
+      "name": "员工",
+      "aliases": [
+        "人员",
+        "谁",
+        "谁完成的",
+        "操作人",
+        "经办人"
+      ],
+      "field_name": "USRDESC",
+      "field_code": "USRCODE",
+      "table": "ATUSERS",
+      "granularity": "employee",
+      "group_by_in_datasets": [
+        "部门人均效能（区块四）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "DIM-002",
+      "name": "部门",
+      "aliases": [
+        "部门代码",
+        "哪个部门",
+        "各部门",
+        "某部门"
+      ],
+      "field_name": "USRMRC",
+      "display_field": "USRMRCDESC",
+      "table": "ATUSERS",
+      "enum_values": [
+        "CI",
+        "OM",
+        "QA",
+        "PD",
+        "QC",
+        "PM",
+        "RD",
+        "HR",
+        "FIN"
+      ],
+      "param_name": "dept",
+      "connection": "EAM"
+    },
+    {
+      "id": "DIM-003",
+      "name": "审批节点",
+      "aliases": [
+        "流程状态",
+        "节点类型",
+        "工种",
+        "环节",
+        "步骤"
+      ],
+      "field_name": "RECFROMSTATUS",
+      "source_field": "ATWORKFLOWNODES.noddesc",
+      "table": "ATWORKFLOWNODES",
+      "enum_values_sample": [
+        "权限创建/修改",
+        "数据备份待执行",
+        "系统所属部门负责人审核",
+        "数据备份完成填写归档信息",
+        "密码更新",
+        "制定维修方案",
+        "时间检查执行",
+        "登记维修记录",
+        "申请部门负责人审核",
+        "数据备份归档待复核",
+        "待IT主管审核",
+        "电子记录归档执行",
+        "验收退回",
+        "待使用部门负责人审核",
+        "待IT人员数据备份审核",
+        "待IT人员审核",
+        "待录入计算机化系统分类信息"
+      ],
+      "group_by_in_datasets": [
+        "部门人均效能（区块四）",
+        "各部门工单处理情况（区块二）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "DIM-004",
+      "name": "流程类型",
+      "aliases": [
+        "工单子类",
+        "流程名称",
+        "什么类型的工单"
+      ],
+      "field_name": "FLODESC",
+      "source_table": "ATWORKFLOW",
+      "table": "ATWORKFLOW",
+      "param_name": "flow_type",
+      "dynamic_enum_dataset": "工单子类下拉框",
+      "connection": "EAM"
+    },
+    {
+      "id": "DIM-005",
+      "name": "工单大类",
+      "aliases": [
+        "流程大类",
+        "工单分类"
+      ],
+      "field_name": "FLOENTITYDESC",
+      "source_table": "ATWORKFLOW",
+      "table": "ATWORKFLOW",
+      "param_name": "flow_category",
+      "dynamic_enum_dataset": "工单大类下拉框",
+      "connection": "EAM"
+    },
+    {
+      "id": "DIM-006",
+      "name": "完成状态",
+      "aliases": [
+        "是否完成",
+        "完成与否",
+        "状态"
+      ],
+      "field_name": "完成状态",
+      "enum_values": [
+        "已完成",
+        "未完成"
+      ],
+      "table": "ATWORKFLOWSTATUS",
+      "connection": "EAM"
+    },
+    {
+      "id": "DIM-007",
+      "name": "时间区间",
+      "aliases": [
+        "耗时区间",
+        "处理时长段",
+        "时效分布",
+        "速度档位"
+      ],
+      "field_name": "TimeRangeLabel",
+      "alt_field": "ProcessTimeCategory",
+      "enum_values": [
+        "≤3h",
+        "3h-1d",
+        "1-5d",
+        "5-10d",
+        "10-30d",
+        "30-90d",
+        ">90d",
+        "3小时内",
+        "3小时到1天",
+        "1天到5天",
+        "5天到10天",
+        "10天到30天",
+        "30天到90天",
+        "大于90天",
+        "未分类"
+      ],
+      "group_by_in_datasets": [
+        "处理时长分布图（区块三）"
+      ],
+      "connection": "EAM"
+    },
+    {
+      "id": "DIM-008",
+      "name": "物料名称",
+      "aliases": [
+        "物料",
+        "品名",
+        "SKU名称"
+      ],
+      "field_name": "skuDescr1",
+      "table": "BAS_SKU",
+      "connection": "WMS_PROD"
+    },
+    {
+      "id": "DIM-009",
+      "name": "物料代码",
+      "aliases": [
+        "物料号",
+        "料号",
+        "SKU编码",
+        "easyCode"
+      ],
+      "field_name": "easyCode",
+      "table": "BAS_SKU",
+      "connection": "WMS_PROD"
+    },
+    {
+      "id": "DIM-010",
+      "name": "库区",
+      "aliases": [
+        "仓库区域",
+        "库位区",
+        "存放位置"
+      ],
+      "field_name": "zoneDescr",
+      "code_field": "zoneid",
+      "enum_values": [
+        "01-研发区",
+        "02-物资物料区",
+        "03-原液产品区",
+        "04-成品区",
+        "05-不合格品区",
+        "08-DS库区",
+        "09-FF库区",
+        "10-EM库区",
+        "11-QC库区",
+        "12-过渡库区"
+      ],
+      "table": "BAS_LOCATION",
+      "connection": "WMS_PROD"
+    },
+    {
+      "id": "DIM-011",
+      "name": "质量状态",
+      "aliases": [
+        "质检状态",
+        "合格与否"
+      ],
+      "field_name": "LOT_QISTS",
+      "enum_values": [
+        "合格",
+        "待验"
+      ],
+      "table": "BSM_CODE_ML",
+      "connection": "WMS_PROD"
+    },
+    {
+      "id": "DIM-012",
+      "name": "库管员",
+      "aliases": [
+        "收货人",
+        "操作员"
+      ],
+      "field_name": "userName",
+      "table": "BSM_USER",
+      "connection": "WMS_PROD"
+    }
+  ],
+  "entities": {
+    "departments": {
+      "code_field": "USRMRC",
+      "name_field": "USRMRCDESC",
+      "values": [
+        {
+          "code": "CI",
+          "full_name": "自控信息部",
+          "short_name": "信创",
+          "aliases": ["信息", "自控"]
+        },
+        {
+          "code": "DS",
+          "full_name": "原液生产部",
+          "short_name": "原液",
+          "aliases": ["原液生产"]
+        },
+        {
+          "code": "EHS",
+          "full_name": "安全环保部",
+          "short_name": "安环",
+          "aliases": ["安全", "环保"]
+        },
+        {
+          "code": "FF",
+          "full_name": "制剂生产部",
+          "short_name": "制剂",
+          "aliases": ["制剂生产"]
+        },
+        {
+          "code": "FM",
+          "full_name": "设备管理部",
+          "short_name": "设备",
+          "aliases": ["设备管理"]
+        },
+        {
+          "code": "LG",
+          "full_name": "物控部",
+          "short_name": "物控",
+          "aliases": ["物控部"]
+        },
+        {
+          "code": "OM",
+          "full_name": "运行保障部",
+          "short_name": "运营",
+          "aliases": ["运行", "保障"]
+        },
+        {
+          "code": "PD",
+          "full_name": "采购部",
+          "short_name": "采购",
+          "aliases": ["采购部"]
+        },
+        {
+          "code": "PM",
+          "full_name": "生产管理办公室",
+          "short_name": "生管",
+          "aliases": ["生产管理", "生管办"]
+        },
+        {
+          "code": "QA",
+          "full_name": "质量保证部",
+          "short_name": "质保",
+          "aliases": ["质量保证"]
+        },
+        {
+          "code": "QC",
+          "full_name": "质量控制部",
+          "short_name": "质控",
+          "aliases": ["质量控制"]
+        },
+        {
+          "code": "TM",
+          "full_name": "技术部",
+          "short_name": "技术",
+          "aliases": ["技术部"]
+        },
+        {
+          "code": "VM",
+          "full_name": "验证管理部",
+          "short_name": "验证",
+          "aliases": ["验证管理"]
+        }
+      ],
+      "validation_rule": "必须从以上13个代码中选择，大小写不敏感，自动转大写"
+    },
+    "time_expressions": {
+      "absolute_patterns": [
+        "\\d{4}[-/]\\d{1,2}[-/]\\d{1,2}",
+        "\\d{4}年\\d{1,2}月\\d{1,2}日"
+      ],
+      "relative_map": {
+        "今天|今日": {
+          "days_offset": 0,
+          "range_type": "single_day"
+        },
+        "昨天": {
+          "days_offset": -1,
+          "range_type": "single_day"
+        },
+        "本月|这个月|今月": {
+          "range_type": "month_current"
+        },
+        "上月|上个月": {
+          "range_type": "month_prev"
+        },
+        "今年": {
+          "range_type": "year_current"
+        },
+        "去年": {
+          "range_type": "year_prev"
+        },
+        "本周|这周": {
+          "range_type": "week_current"
+        },
+        "上周": {
+          "range_type": "week_prev"
+        }
+      },
+      "range_patterns": {
+        "最近|近|过去(\\d+)\\s*(天|日)": {
+          "unit_multiplier": {
+            "天": 1,
+            "日": 1,
+            "周": 7,
+            "星期": 7,
+            "个月": 30,
+            "月": 30
+          }
+        }
+      },
+      "default_when_missing": "查询全部时间范围（不添加WHERE条件）"
+    },
+    "intent_types": {
+      "extreme": {
+        "keywords": [
+          "最多",
+          "最少",
+          "最快",
+          "最慢",
+          "最大",
+          "最小",
+          "最高",
+          "最低",
+          "最好",
+          "最差",
+          "top",
+          "第一",
+          "倒数第一",
+          "最后一名"
+        ],
+        "description": "极值查询 - 找出某个指标的最大值或最小值对应的实体",
+        "required_dimensions": [
+          "employee",
+          "department"
+        ],
+        "default_aggregation": "sum",
+        "default_sort": "desc for max / asc for min"
+      },
+      "ranking": {
+        "keywords": [
+          "排名",
+          "排行",
+          "前\\d+名",
+          "第\\d+名",
+          "Top\\s*\\d+",
+          "谁第几",
+          "排第几",
+          "N强"
+        ],
+        "description": "排名查询 - 按指标排序后取Top-N实体",
+        "required_dimensions": [
+          "employee",
+          "department"
+        ],
+        "default_aggregation": "sum",
+        "default_sort": "desc"
+      },
+      "comparison": {
+        "keywords": [
+          "对比",
+          "比较",
+          "vs",
+          "A比B",
+          "哪个更",
+          "谁多",
+          "差异",
+          "相差"
+        ],
+        "description": "对比查询 - 比较两个或多个维度/实体的同一指标",
+        "required_dimensions": [
+          "department_multi",
+          "employee_multi"
+        ],
+        "default_operation": "side_by_side"
+      },
+      "statistic": {
+        "keywords": [
+          "总共",
+          "多少",
+          "总计",
+          "汇总",
+          "统计",
+          "概况",
+          "情况",
+          "数据",
+          "KPI",
+          "指标",
+          "汇总"
+        ],
+        "description": "统计汇总 - 返回聚合后的全局或分组统计值",
+        "required_dimensions": [],
+        "default_aggregation": "count/sum/avg"
+      },
+      "trend": {
+        "keywords": [
+          "趋势",
+          "走势",
+          "变化",
+          "增长",
+          "下降",
+          "近\\d+天",
+          "近\\d+周",
+          "近\\d+月",
+          "最近"
+        ],
+        "description": "趋势分析 - 时间维度上的变化趋势",
+        "required_time": true
+      },
+      "list": {
+        "keywords": [
+          "列出",
+          "所有",
+          "全部",
+          "有哪些",
+          "明细",
+          "详细",
+          "清单",
+          "名单"
+        ],
+        "description": "列表查询 - 返回原始明细数据不做聚合",
+        "required_dimensions": [],
+        "no_aggregation": true
+      }
+    },
+    "synonyms": {
+      "员工": [
+        "人员",
+        "谁",
+        "经办人",
+        "操作人",
+        "处理人",
+        "完成者",
+        "申请人"
+      ],
+      "部门": [
+        "科室",
+        "组",
+        "团队",
+        "单位",
+        "中心"
+      ],
+      "工单": [
+        "单据",
+        "流程",
+        "申请",
+        "任务",
+        "工作流"
+      ],
+      "最多": [
+        "最高",
+        "最大",
+        "排名第一",
+        "第一名",
+        "榜首",
+        "冠军"
+      ],
+      "最少": [
+        "最低",
+        "最小",
+        "倒数第一",
+        "末位",
+        "垫底"
+      ],
+      "最快": [
+        "最短时间",
+        "最迅速",
+        "效率最高",
+        "速度最快"
+      ],
+      "最慢": [
+        "最长",
+        "最慢",
+        "最久",
+        "效率最低",
+        "耗时最长"
+      ],
+      "数量": [
+        "个数",
+        "笔数",
+        "件数",
+        "单数",
+        "次数",
+        "量"
+      ],
+      "耗时": [
+        "用时",
+        "处理时间",
+        "时长",
+        "周期",
+        "花费时间",
+        "处理周期"
+      ]
+    }
+  },
+  "typical_questions": [
+    {
+      "id": "Q001",
+      "query": "CI部门完成工单数量最多的员工",
+      "intent": "extreme",
+      "target_indicator": "审批数量",
+      "operation": "max",
+      "dimension_employee": true,
+      "dimension_department": "CI",
+      "time_range": null,
+      "expected_api": "部门人均效能（区块四）",
+      "expected_params": {
+        "dept": "CI"
+      },
+      "expected_result_description": "返回CI部门各员工的审批数量SUM，按降序排列，第一条为最多的员工及其数值"
+    },
+    {
+      "id": "Q002",
+      "query": "各部门工单处理情况对比",
+      "intent": "comparison",
+      "target_indicator": "工单数量",
+      "dimension_department": "all",
+      "expected_api": "关键指标汇总（区块一） 或 各部门工单处理情况（区块二）",
+      "expected_params": {},
+      "expected_result_description": "返回各部门的工单数量、总耗时、平均耗时等指标，用于横向对比"
+    },
+    {
+      "id": "Q003",
+      "query": "OM部门的员工效能排名",
+      "intent": "ranking",
+      "target_indicator": "审批数量",
+      "dimension_employee": true,
+      "dimension_department": "OM",
+      "expected_api": "部门人均效能（区块四）",
+      "expected_params": {
+        "dept": "OM"
+      },
+      "expected_result_description": "返回OM部门所有员工按审批数量降序排列的完整排名列表"
+    },
+    {
+      "id": "Q004",
+      "query": "最近一周的工单趋势",
+      "intent": "trend",
+      "target_indicator": "工单数量",
+      "time_range": "最近一周",
+      "expected_api": "关键指标汇总（区块一）",
+      "expected_params": {
+        "start_time": "auto_resolved",
+        "end_time": "auto_resolved"
+      },
+      "expected_result_description": "返回最近一周内每天的工单数量变化趋势"
+    },
+    {
+      "id": "Q005",
+      "query": "本月CI部门的处理效率怎么样",
+      "intent": "statistic",
+      "target_indicator": "平均耗时",
+      "dimension_department": "CI",
+      "time_range": "本月",
+      "expected_api": "关键指标汇总（区块一）",
+      "expected_params": {
+        "dept": "CI",
+        "start_time": "auto_resolved"
+      },
+      "expected_result_description": "返回本月CI部门的平均耗时、人均工单、效能区间等统计摘要"
+    },
+    {
+      "id": "Q006",
+      "query": "RD部门谁处理的工单最少",
+      "intent": "extreme",
+      "target_indicator": "审批数量",
+      "operation": "min",
+      "dimension_employee": true,
+      "dimension_department": "RD",
+      "expected_api": "部门人均效能（区块四）",
+      "expected_params": {
+        "dept": "RD"
+      },
+      "expected_result_description": "返回RD部门各员工中审批数量最少的员工"
+    },
+    {
+      "id": "Q007",
+      "query": "PM部门的人员工单耗时分布",
+      "intent": "statistic",
+      "target_indicator": "审批数量",
+      "dimension_dimension": "时间区间",
+      "dimension_department": "PM",
+      "expected_api": "部门人均效能（区块四）",
+      "expected_params": {
+        "dept": "PM"
+      },
+      "expected_result_description": "返回PM部门各员工在不同耗时区间(≤3h/3h-1d/...)的工单数量分布"
+    },
+    {
+      "id": "Q008",
+      "query": "QA和PD哪个部门处理的工单多",
+      "intent": "comparison",
+      "target_indicator": "工单数量",
+      "dimension_department_multi": [
+        "QA",
+        "PD"
+      ],
+      "expected_api": "各部门工单处理情况（区块二）",
+      "expected_params": {
+        "dept": "QA"
+      },
+      "expected_result_description": "对比QA和PD两部门的工单数量，给出结论"
+    },
+    {
+      "id": "Q009",
+      "query": "列出HR部门的所有工单明细",
+      "intent": "list",
+      "target_indicator": "审批数量",
+      "dimension_department": "HR",
+      "expected_api": "部门人均效能（区块四）",
+      "expected_params": {
+        "dept": "HR"
+      },
+      "expected_result_description": "返回HR部门每个员工在每个审批节点的原始明细记录"
+    },
+    {
+      "id": "Q010",
+      "query": "上周QC部门谁处理最快",
+      "intent": "extreme",
+      "target_indicator": "平均耗时",
+      "operation": "min",
+      "dimension_employee": true,
+      "dimension_department": "QC",
+      "time_range": "上周",
+      "expected_api": "部门人均效能（区块四）",
+      "expected_params": {
+        "dept": "QC",
+        "start_time": "auto_resolved",
+        "end_time": "auto_resolved"
+      },
+      "expected_result_description": "返回上周QC部门平均耗时最少的员工"
+    },
+    {
+      "id": "Q011",
+      "query": "所有部门的关键指标汇总",
+      "intent": "statistic",
+      "target_indicator": "多指标",
+      "dimension_scope": "global",
+      "expected_api": "关键指标汇总（区块一）",
+      "expected_params": {},
+      "expected_result_description": "返回全公司级别的工单总数、总耗时、平均耗时、处理人数、人均工单、效能区间"
+    },
+    {
+      "id": "Q012",
+      "query": "FIN部门工单完成率是多少",
+      "intent": "statistic",
+      "target_indicator": "完成状态工单数",
+      "dimension_department": "FIN",
+      "expected_api": "工单完成情况",
+      "expected_params": {
+        "dept": "FIN"
+      },
+      "expected_result_description": "返回FIN部门已完工单和未完工单的数量及比例"
+    },
+    {
+      "id": "Q013",
+      "query": "未完成的工单有哪些",
+      "intent": "list",
+      "target_indicator": "完成状态",
+      "filter_value": "未完成",
+      "expected_api": "工单完成情况",
+      "expected_params": {},
+      "expected_result_description": "返回所有未完成状态的工单列表"
+    },
+    {
+      "id": "Q014",
+      "query": "OM和CI部门谁的效率更高",
+      "intent": "comparison",
+      "target_indicator": "平均耗时",
+      "comparison_metric": "lower_is_better",
+      "dimension_department_multi": [
+        "OM",
+        "CI"
+      ],
+      "expected_api": "关键指标汇总（区块一）",
+      "expected_params": {},
+      "expected_result_description": "对比OM和CI的平均耗时，耗时低的一方效率更高"
+    },
+    {
+      "id": "Q015",
+      "query": "今年RD的汇总数据",
+      "intent": "statistic",
+      "target_indicator": "多指标",
+      "dimension_department": "RD",
+      "time_range": "今年",
+      "expected_api": "关键指标汇总（区块一）",
+      "expected_params": {
+        "dept": "RD",
+        "start_time": "auto_resolved"
+      },
+      "expected_result_description": "返回今年RD部门的全维度统计数据"
+    },
+    {
+      "id": "Q016",
+      "query": "各部门平均处理时长",
+      "intent": "statistic",
+      "target_indicator": "平均耗时",
+      "dimension_groupby": "部门",
+      "expected_api": "各部门工单处理情况（区块二）",
+      "expected_params": {},
+      "expected_result_description": "按部门分组的平均耗时列表"
+    },
+    {
+      "id": "Q017",
+      "query": "CI部门前5名员工",
+      "intent": "ranking",
+      "target_indicator": "审批数量",
+      "top_n": 5,
+      "dimension_employee": true,
+      "dimension_department": "CI",
+      "expected_api": "部门人均效能（区块四）",
+      "expected_params": {
+        "dept": "CI"
+      },
+      "expected_result_description": "CI部门按审批数量排序的前5名员工"
+    },
+    {
+      "id": "Q018",
+      "query": "本月PM部门耗时超过5天的工单",
+      "intent": "list",
+      "target_indicator": "总耗时",
+      "filter_condition": ">5天",
+      "dimension_department": "PM",
+      "time_range": "本月",
+      "expected_api": "部门人均效能（区块四）",
+      "expected_params": {
+        "dept": "PM",
+        "start_time": "auto_resolved"
+      },
+      "expected_result_description": "PM部门本月总耗时>5天的明细记录"
+    },
+    {
+      "id": "Q019",
+      "query": "HR部门谁的速度最慢",
+      "intent": "extreme",
+      "target_indicator": "平均耗时",
+      "operation": "max",
+      "dimension_employee": true,
+      "dimension_department": "HR",
+      "expected_api": "部门人均效能（区块四）",
+      "expected_params": {
+        "dept": "HR"
+      },
+      "expected_result_description": "HR部门平均耗时最高的员工"
+    },
+    {
+      "id": "Q020",
+      "query": "最近30天的工单完成情况",
+      "intent": "trend",
+      "target_indicator": "完成状态工单数",
+      "time_range": "最近30天",
+      "expected_api": "工单完成情况",
+      "expected_params": {
+        "start_time": "auto_resolved",
+        "end_time": "auto_resolved"
+      },
+      "expected_result_description": "最近30天内每天/每周的完成率变化"
+    }
+  ],
+  "fallback_and_clarification": {
+    "unknown_entity": {
+      "trigger": "用户提到不存在的部门/员工/流程类型",
+      "response_template": "抱歉，我没有找到关于\"{entity}\"的信息。目前支持的部门有: CI, DS, EHS, FF, FM, LG, OM, PD, PM, QA, QC, TM, VM。您可以重新确认一下吗？"
+    },
+    "ambiguous_query": {
+      "trigger": "查询意图不明确（缺少关键维度或指标）",
+      "response_template": "您的查询\"{original_query}\"可以有多种理解。请问您是想了解:\n1. {option1}\n2. {option2}\n\n请选择一个数字或补充更多信息。"
+    },
+    "no_data": {
+      "trigger": "API返回空数据",
+      "response_template": "根据您的查询\"{original_query}\"，在当前条件下没有找到匹配的数据。可能的原因:\n1. 该部门/时间段内确实没有相关工单\n2. 时间范围可能需要调整\n\n建议: 尝试扩大时间范围（如从'本月'改为'今年'）或更换部门。"
+    }
+  },
+  "intent_types": {
+    "extreme": {
+      "keywords": [
+        "最多",
+        "最少",
+        "最快",
+        "最慢",
+        "最大",
+        "最小",
+        "最高",
+        "最低",
+        "最好",
+        "最差",
+        "top",
+        "第一",
+        "倒数第一",
+        "最后一名"
+      ],
+      "description": "极值查询",
+      "required_dimensions": [
+        "employee",
+        "department"
+      ],
+      "default_aggregation": "sum"
+    },
+    "ranking": {
+      "keywords": [
+        "排名",
+        "排行",
+        "前\\d+名",
+        "第\\d+名",
+        "Top\\s*\\d+",
+        "谁第几",
+        "排第几"
+      ],
+      "description": "排名查询",
+      "required_dimensions": [
+        "employee",
+        "department"
+      ],
+      "default_aggregation": "sum"
+    },
+    "comparison": {
+      "keywords": [
+        "对比",
+        "比较",
+        "vs",
+        "哪个更",
+        "谁多",
+        "差异",
+        "相差"
+      ],
+      "description": "对比查询",
+      "required_dimensions": [
+        "department_multi",
+        "employee_multi"
+      ]
+    },
+    "statistic": {
+      "keywords": [
+        "总共",
+        "多少",
+        "总计",
+        "汇总",
+        "统计",
+        "概况",
+        "情况",
+        "数据",
+        "KPI",
+        "指标"
+      ],
+      "description": "统计汇总",
+      "required_dimensions": []
+    },
+    "trend": {
+      "keywords": [
+        "趋势",
+        "走势",
+        "变化",
+        "增长",
+        "下降",
+        "近\\d+天",
+        "最近"
+      ],
+      "description": "趋势分析",
+      "required_time": true
+    },
+    "list": {
+      "keywords": [
+        "列出",
+        "所有",
+        "全部",
+        "有哪些",
+        "明细",
+        "详细",
+        "清单",
+        "名单"
+      ],
+      "description": "列表查询",
+      "no_aggregation": true
+    }
+  },
+  "synonyms": {
+    "员工": [
+      "人员",
+      "谁",
+      "经办人",
+      "操作人",
+      "处理人",
+      "完成者"
+    ],
+    "部门": [
+      "科室",
+      "组",
+      "团队",
+      "单位",
+      "中心"
+    ],
+    "工单": [
+      "单据",
+      "流程",
+      "申请",
+      "任务",
+      "工作流"
+    ],
+    "最多": [
+      "最高",
+      "最大",
+      "排名第一",
+      "第一名",
+      "榜首"
+    ],
+    "最少": [
+      "最低",
+      "最小",
+      "倒数第一",
+      "末位"
+    ],
+    "最快": [
+      "最短时间",
+      "最迅速",
+      "效率最高"
+    ],
+    "最慢": [
+      "最长",
+      "效率最低",
+      "耗时最长"
+    ],
+    "数量": [
+      "个数",
+      "笔数",
+      "件数",
+      "次数",
+      "量"
+    ],
+    "耗时": [
+      "用时",
+      "处理时间",
+      "时长",
+      "周期"
+    ]
+  }
+}

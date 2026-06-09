@@ -1,0 +1,3134 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-06-01 09:20:47",
+  "examples": {
+    "seed_001": {
+      "id": "seed_001",
+      "query": "CI部门完成工单数量最多的员工",
+      "normalized_query": "ci部门完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "extreme",
+      "department": "CI",
+      "tags": [
+        "employee",
+        "extreme",
+        "dept"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 19
+    },
+    "seed_002": {
+      "id": "seed_002",
+      "query": "OM部门谁处理的工单最快",
+      "normalized_query": "om部门谁处理的工单最快",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "OM"
+      },
+      "analysis_type": "extreme",
+      "department": "OM",
+      "tags": [
+        "employee",
+        "extreme",
+        "dept"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_003": {
+      "id": "seed_003",
+      "query": "QA部门完成工单最少的员工是谁",
+      "normalized_query": "qa部门完成工单最少的员工是谁",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "QA"
+      },
+      "analysis_type": "extreme",
+      "department": "QA",
+      "tags": [
+        "employee",
+        "extreme",
+        "dept"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_004": {
+      "id": "seed_004",
+      "query": "PD部门效率最低的员工",
+      "normalized_query": "pd部门效率最低的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "PD"
+      },
+      "analysis_type": "extreme",
+      "department": "PD",
+      "tags": [
+        "employee",
+        "extreme",
+        "dept"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_005": {
+      "id": "seed_005",
+      "query": "RD部门的员工效能排名",
+      "normalized_query": "rd部门的员工效能排名",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "RD"
+      },
+      "analysis_type": "ranking",
+      "department": "RD",
+      "tags": [
+        "employee",
+        "ranking",
+        "dept"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_006": {
+      "id": "seed_006",
+      "query": "QC部门谁处理工单最多，列出前5名",
+      "normalized_query": "qc部门谁处理工单最多列出前5名",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "QC"
+      },
+      "analysis_type": "ranking",
+      "department": "QC",
+      "tags": [
+        "employee",
+        "ranking",
+        "dept",
+        "top"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_007": {
+      "id": "seed_007",
+      "query": "PM部门员工处理速度排行",
+      "normalized_query": "pm部门员工处理速度排行",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "PM"
+      },
+      "analysis_type": "ranking",
+      "department": "PM",
+      "tags": [
+        "employee",
+        "ranking",
+        "dept"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_008": {
+      "id": "seed_008",
+      "query": "各部门工单处理情况对比",
+      "normalized_query": "各部门工单处理情况对比",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {},
+      "analysis_type": "comparison",
+      "department": "",
+      "tags": [
+        "department",
+        "comparison",
+        "all"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_009": {
+      "id": "seed_009",
+      "query": "QA部门和PD部门谁处理的工单多",
+      "normalized_query": "qa部门和pd部门谁处理的工单多",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "dept": "QA"
+      },
+      "analysis_type": "comparison",
+      "department": "QA",
+      "tags": [
+        "department",
+        "comparison",
+        "multi_dept"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_010": {
+      "id": "seed_010",
+      "query": "OM和CI哪个部门效率更高",
+      "normalized_query": "om和ci哪个部门效率更高",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {},
+      "analysis_type": "comparison",
+      "department": "",
+      "tags": [
+        "department",
+        "comparison",
+        "multi_dept"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_011": {
+      "id": "seed_011",
+      "query": "所有部门的关键指标汇总",
+      "normalized_query": "所有部门的关键指标汇总",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {},
+      "analysis_type": "statistic",
+      "department": "",
+      "tags": [
+        "summary",
+        "statistic",
+        "kpi",
+        "all"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_012": {
+      "id": "seed_012",
+      "query": "本月HR部门的整体工单情况",
+      "normalized_query": "本月hr部门的整体工单情况",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "dept": "HR"
+      },
+      "analysis_type": "statistic",
+      "department": "HR",
+      "tags": [
+        "dept",
+        "statistic",
+        "time",
+        "HR"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_013": {
+      "id": "seed_013",
+      "query": "FIN部门最近一周的数据统计",
+      "normalized_query": "fin部门最近一周的数据统计",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "dept": "FIN"
+      },
+      "analysis_type": "statistic",
+      "department": "FIN",
+      "tags": [
+        "dept",
+        "statistic",
+        "time",
+        "FIN"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_014": {
+      "id": "seed_014",
+      "query": "最近一周的工单处理趋势",
+      "normalized_query": "最近一周的工单处理趋势",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {},
+      "analysis_type": "trend",
+      "department": "",
+      "tags": [
+        "time",
+        "trend",
+        "recent"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_015": {
+      "id": "seed_015",
+      "query": "本月CI部门的工单变化情况",
+      "normalized_query": "本月ci部门的工单变化情况",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "dept": "CI",
+        "start_time": "本月"
+      },
+      "analysis_type": "trend",
+      "department": "CI",
+      "tags": [
+        "dept",
+        "time",
+        "trend",
+        "CI"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_016": {
+      "id": "seed_016",
+      "query": "列出HR部门的所有工单明细",
+      "normalized_query": "列出hr部门的所有工单明细",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "dept": "HR"
+      },
+      "analysis_type": "list",
+      "department": "HR",
+      "tags": [
+        "dept",
+        "detail",
+        "list",
+        "HR"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_017": {
+      "id": "seed_017",
+      "query": "OM部门最近的工单列表",
+      "normalized_query": "om部门最近的工单列表",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "dept": "OM"
+      },
+      "analysis_type": "list",
+      "department": "OM",
+      "tags": [
+        "dept",
+        "list",
+        "OM"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_018": {
+      "id": "seed_018",
+      "query": "PM部门的人员工单耗时分布",
+      "normalized_query": "pm部门的人员工单耗时分布",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "PM"
+      },
+      "analysis_type": "statistic",
+      "department": "PM",
+      "tags": [
+        "employee",
+        "distribution",
+        "time",
+        "PM"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_019": {
+      "id": "seed_019",
+      "query": "各部门工单平均处理时长",
+      "normalized_query": "各部门工单平均处理时长",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {},
+      "analysis_type": "statistic",
+      "department": "",
+      "tags": [
+        "department",
+        "time",
+        "avg",
+        "all"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_020": {
+      "id": "seed_020",
+      "query": "CI部门工单完成率是多少",
+      "normalized_query": "ci部门工单完成率是多少",
+      "api_id": "工单完成情况_工单效能看板",
+      "api_name": "工单完成情况",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "statistic",
+      "department": "CI",
+      "tags": [
+        "dept",
+        "status",
+        "completion",
+        "CI"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "seed_021": {
+      "id": "seed_021",
+      "query": "未完成的工单有哪些",
+      "normalized_query": "未完成的工单有哪些",
+      "api_id": "工单完成情况_工单效能看板",
+      "api_name": "工单完成情况",
+      "parameters": {},
+      "analysis_type": "list",
+      "department": "",
+      "tags": [
+        "status",
+        "incomplete",
+        "list"
+      ],
+      "success": true,
+      "data_count": 0,
+      "created_at": "2026-05-18 11:14:43",
+      "source": "seed",
+      "confidence": 0.95,
+      "usage_count": 0
+    },
+    "auto_1779074132550_21": {
+      "id": "auto_1779074132550_21",
+      "query": "CI部门谁完成的工单最多",
+      "normalized_query": "ci部门谁完成的工单最多",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 7,
+      "created_at": "2026-05-18 11:15:32",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779074176422_22": {
+      "id": "auto_1779074176422_22",
+      "query": "各部门工单处理情况",
+      "normalized_query": "各部门工单处理情况",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-18 11:16:16",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 19
+    },
+    "auto_1779084411930_23": {
+      "id": "auto_1779084411930_23",
+      "query": "CI部门完成工单最多的员工",
+      "normalized_query": "ci部门完成工单最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 7,
+      "created_at": "2026-05-18 14:06:51",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779084450623_24": {
+      "id": "auto_1779084450623_24",
+      "query": "本月CI部门完成工单最多的员工",
+      "normalized_query": "本月ci部门完成工单最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 7,
+      "created_at": "2026-05-18 14:07:30",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779084485261_25": {
+      "id": "auto_1779084485261_25",
+      "query": "最近一周OM部门的工单情况",
+      "normalized_query": "最近一周om部门的工单情况",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "dept": "OM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-18 14:08:05",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779084532422_26": {
+      "id": "auto_1779084532422_26",
+      "query": "今天QA谁处理的工单最快",
+      "normalized_query": "今天qa谁处理的工单最快",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "QA"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 14,
+      "created_at": "2026-05-18 14:08:52",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779087496844_27": {
+      "id": "auto_1779087496844_27",
+      "query": "OM部门本月工单统计",
+      "normalized_query": "om部门本月工单统计",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "start_time": "本月",
+        "end_time": "2026-05-18",
+        "dept": "OM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-18 14:58:16",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 14
+    },
+    "auto_1779087971670_28": {
+      "id": "auto_1779087971670_28",
+      "query": "本月CI部门完成工单数量最多的员工",
+      "normalized_query": "本月ci部门完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 7,
+      "created_at": "2026-05-18 15:06:11",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779088940038_29": {
+      "id": "auto_1779088940038_29",
+      "query": "查一下验收记录有无异常",
+      "normalized_query": "查一下验收记录有无异常",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-18 15:22:20",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779161802983_30": {
+      "id": "auto_1779161802983_30",
+      "query": "OM部门完成工单数量最多的员工",
+      "normalized_query": "om部门完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "OM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 54,
+      "created_at": "2026-05-19 11:36:42",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779162090783_31": {
+      "id": "auto_1779162090783_31",
+      "query": "工单总数是多少",
+      "normalized_query": "工单总数是多少",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-19 11:41:30",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162135428_32": {
+      "id": "auto_1779162135428_32",
+      "query": "工单数量统计",
+      "normalized_query": "工单数量统计",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 8,
+      "created_at": "2026-05-19 11:42:15",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162181698_33": {
+      "id": "auto_1779162181698_33",
+      "query": "关键指标汇总",
+      "normalized_query": "关键指标汇总",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-19 11:43:01",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162264990_34": {
+      "id": "auto_1779162264990_34",
+      "query": "部门人均效能分析",
+      "normalized_query": "部门人均效能分析",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 492,
+      "created_at": "2026-05-19 11:44:24",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162308300_35": {
+      "id": "auto_1779162308300_35",
+      "query": "员工完成工单数量排名",
+      "normalized_query": "员工完成工单数量排名",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 492,
+      "created_at": "2026-05-19 11:45:08",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162344276_36": {
+      "id": "auto_1779162344276_36",
+      "query": "CI部门工单总数是多少",
+      "normalized_query": "ci部门工单总数是多少",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-19 11:45:44",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162382854_37": {
+      "id": "auto_1779162382854_37",
+      "query": "OM部门工单数量统计",
+      "normalized_query": "om部门工单数量统计",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "dept": "OM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 5,
+      "created_at": "2026-05-19 11:46:22",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162425056_38": {
+      "id": "auto_1779162425056_38",
+      "query": "QA部门完成工单数量最多的员工",
+      "normalized_query": "qa部门完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "QA"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 55,
+      "created_at": "2026-05-19 11:47:05",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162456671_39": {
+      "id": "auto_1779162456671_39",
+      "query": "PD部门工单处理情况",
+      "normalized_query": "pd部门工单处理情况",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "dept": "PD"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-19 11:47:36",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162508883_40": {
+      "id": "auto_1779162508883_40",
+      "query": "本月工单总数",
+      "normalized_query": "本月工单总数",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "start_time": "本月",
+        "end_time": "本月"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-19 11:48:28",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162552767_41": {
+      "id": "auto_1779162552767_41",
+      "query": "上月工单数量统计",
+      "normalized_query": "上月工单数量统计",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "start_time": "2026-04-01",
+        "end_time": "2026-04-30"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 8,
+      "created_at": "2026-05-19 11:49:12",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162594592_42": {
+      "id": "auto_1779162594592_42",
+      "query": "本周完成工单最多的员工",
+      "normalized_query": "本周完成工单最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-19"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 492,
+      "created_at": "2026-05-19 11:49:54",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162631172_43": {
+      "id": "auto_1779162631172_43",
+      "query": "最近一周各部门工单处理情况",
+      "normalized_query": "最近一周各部门工单处理情况",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-12",
+        "end_time": "2026-05-19"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-19 11:50:31",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162670980_44": {
+      "id": "auto_1779162670980_44",
+      "query": "最近3个月部门人均效能",
+      "normalized_query": "最近3个月部门人均效能",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-02-18",
+        "end_time": "2026-05-19"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 492,
+      "created_at": "2026-05-19 11:51:10",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162719810_45": {
+      "id": "auto_1779162719810_45",
+      "query": "2026年员工完成工单排名",
+      "normalized_query": "2026年员工完成工单排名",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-01-01",
+        "end_time": "2026-12-31"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 492,
+      "created_at": "2026-05-19 11:51:59",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162758794_46": {
+      "id": "auto_1779162758794_46",
+      "query": "CI部门本月工单总数",
+      "normalized_query": "ci部门本月工单总数",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-19",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-19 11:52:38",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162798608_47": {
+      "id": "auto_1779162798608_47",
+      "query": "OM部门上月工单数量统计",
+      "normalized_query": "om部门上月工单数量统计",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "start_time": "2026-04-01",
+        "end_time": "2026-04-30",
+        "dept": "OM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 5,
+      "created_at": "2026-05-19 11:53:18",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162840040_48": {
+      "id": "auto_1779162840040_48",
+      "query": "QA部门本周完成工单最多的员工",
+      "normalized_query": "qa部门本周完成工单最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-19",
+        "dept": "QA"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 55,
+      "created_at": "2026-05-19 11:54:00",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162873470_49": {
+      "id": "auto_1779162873470_49",
+      "query": "PD部门最近一周工单处理情况",
+      "normalized_query": "pd部门最近一周工单处理情况",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-12",
+        "end_time": "2026-05-19",
+        "dept": "PD"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-19 11:54:33",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162925957_50": {
+      "id": "auto_1779162925957_50",
+      "query": "PM部门2026年员工完成工单排名",
+      "normalized_query": "pm部门2026年员工完成工单排名",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-01-01",
+        "end_time": "2026-12-31",
+        "dept": "PM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 2,
+      "created_at": "2026-05-19 11:55:25",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779162967442_51": {
+      "id": "auto_1779162967442_51",
+      "query": "CI和OM部门工单数量对比",
+      "normalized_query": "ci和om部门工单数量对比",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "dept": "OM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-19 11:56:07",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 3
+    },
+    "auto_1779163022056_52": {
+      "id": "auto_1779163022056_52",
+      "query": "最近3个月工单处理时间趋势",
+      "normalized_query": "最近3个月工单处理时间趋势",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-02-18",
+        "end_time": "2026-05-19"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-19 11:57:02",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779163061367_53": {
+      "id": "auto_1779163061367_53",
+      "query": "QC部门上月完成工单最少的员工",
+      "normalized_query": "qc部门上月完成工单最少的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-04-01",
+        "end_time": "2026-04-30",
+        "dept": "QC"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 57,
+      "created_at": "2026-05-19 11:57:41",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779163098228_54": {
+      "id": "auto_1779163098228_54",
+      "query": "审批数量最多的员工",
+      "normalized_query": "审批数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 492,
+      "created_at": "2026-05-19 11:58:18",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779163137570_55": {
+      "id": "auto_1779163137570_55",
+      "query": "HR部门本月平均工单处理时间",
+      "normalized_query": "hr部门本月平均工单处理时间",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-19",
+        "dept": "HR"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-19 11:58:57",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779163178020_56": {
+      "id": "auto_1779163178020_56",
+      "query": "请帮我查询一下CI部门最近2个月工单完成数量最多的员工是谁",
+      "normalized_query": "请帮我查询一下ci部门最近2个月工单完成数量最多的员工是谁",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-03-20",
+        "end_time": "2026-05-19",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 54,
+      "created_at": "2026-05-19 11:59:38",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779258978903_57": {
+      "id": "auto_1779258978903_57",
+      "query": "CI部门工单统计",
+      "normalized_query": "ci部门工单统计",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-20 14:36:18",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779259887731_58": {
+      "id": "auto_1779259887731_58",
+      "query": "PM部门本月工单统计",
+      "normalized_query": "pm部门本月工单统计",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-20",
+        "dept": "PM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-20 14:51:27",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779261686369_59": {
+      "id": "auto_1779261686369_59",
+      "query": "FM部门人均效能",
+      "normalized_query": "fm部门人均效能",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "FM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 69,
+      "created_at": "2026-05-20 15:21:26",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779262240031_60": {
+      "id": "auto_1779262240031_60",
+      "query": "EHS部门员工完成工单排名",
+      "normalized_query": "ehs部门员工完成工单排名",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "EHS"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 11,
+      "created_at": "2026-05-20 15:30:40",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779262759973_61": {
+      "id": "auto_1779262759973_61",
+      "query": "FM部门最近3个月人均效能",
+      "normalized_query": "fm部门最近3个月人均效能",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-02-19",
+        "end_time": "2026-05-20",
+        "dept": "FM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 69,
+      "created_at": "2026-05-20 15:39:19",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779263012799_62": {
+      "id": "auto_1779263012799_62",
+      "query": "VM部门本月平均工单处理时间",
+      "normalized_query": "vm部门本月平均工单处理时间",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-20",
+        "dept": "VM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-20 15:43:32",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779264913760_63": {
+      "id": "auto_1779264913760_63",
+      "query": "杨坤本月批了多少单据",
+      "normalized_query": "杨坤本月批了多少单据",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "start_time": "本月",
+        "end_time": "本月"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-20 16:15:13",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 5
+    },
+    "auto_1779268846071_64": {
+      "id": "auto_1779268846071_64",
+      "query": "杨坤本月审批工单数量",
+      "normalized_query": "杨坤本月审批工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-20"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 6,
+      "created_at": "2026-05-20 17:20:46",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779268891094_65": {
+      "id": "auto_1779268891094_65",
+      "query": "杨坤批了多少单",
+      "normalized_query": "杨坤批了多少单",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 6,
+      "created_at": "2026-05-20 17:21:31",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779269298613_66": {
+      "id": "auto_1779269298613_66",
+      "query": "杨晓龙本月批了多少单据",
+      "normalized_query": "杨晓龙本月批了多少单据",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-20"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-20 17:28:18",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779326270131_67": {
+      "id": "auto_1779326270131_67",
+      "query": "杨晓龙本月审批单据数量",
+      "normalized_query": "杨晓龙本月审批单据数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-21 09:17:50",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 2
+    },
+    "auto_1779326321729_68": {
+      "id": "auto_1779326321729_68",
+      "query": "寇敏本月工单审批数量",
+      "normalized_query": "寇敏本月工单审批数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 493,
+      "created_at": "2026-05-21 09:18:41",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779326984327_69": {
+      "id": "auto_1779326984327_69",
+      "query": "杨坤本月审批单据数量",
+      "normalized_query": "杨坤本月审批单据数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 6,
+      "created_at": "2026-05-21 09:29:44",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779328252545_70": {
+      "id": "auto_1779328252545_70",
+      "query": "杨晓龙本月审批工单数量",
+      "normalized_query": "杨晓龙本月审批工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-21 09:50:52",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779330039398_71": {
+      "id": "auto_1779330039398_71",
+      "query": "杨晓龙本月工单审批数量",
+      "normalized_query": "杨晓龙本月工单审批数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 949,
+      "created_at": "2026-05-21 10:20:39",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 2
+    },
+    "auto_1779330423004_72": {
+      "id": "auto_1779330423004_72",
+      "query": "CI部门本月工单统计",
+      "normalized_query": "ci部门本月工单统计",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-21 10:27:03",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779342706904_73": {
+      "id": "auto_1779342706904_73",
+      "query": "CI部门本月审批工单数量最多的员工",
+      "normalized_query": "ci部门本月审批工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 36,
+      "created_at": "2026-05-21 13:51:46",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779342832675_74": {
+      "id": "auto_1779342832675_74",
+      "query": "昨天到今天为止CI部门的审批工单数量",
+      "normalized_query": "昨天到今天为止ci部门的审批工单数量",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 3,
+      "created_at": "2026-05-21 13:53:52",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779342918610_75": {
+      "id": "auto_1779342918610_75",
+      "query": "CI部门本月的审批工单数量",
+      "normalized_query": "ci部门本月的审批工单数量",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 2,
+      "created_at": "2026-05-21 13:55:18",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779342955290_76": {
+      "id": "auto_1779342955290_76",
+      "query": "杨晓龙本周审批工单数量",
+      "normalized_query": "杨晓龙本周审批工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-21 13:55:55",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779343018817_77": {
+      "id": "auto_1779343018817_77",
+      "query": "刘遥远本周审批工单数量",
+      "normalized_query": "刘遥远本周审批工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 4,
+      "created_at": "2026-05-21 13:56:58",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779343332386_78": {
+      "id": "auto_1779343332386_78",
+      "query": "各部门本月审批工单情况",
+      "normalized_query": "各部门本月审批工单情况",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-21 14:02:12",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779343727829_79": {
+      "id": "auto_1779343727829_79",
+      "query": "杨坤本周审批工单数量",
+      "normalized_query": "杨坤本周审批工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-21 14:08:47",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779344271650_80": {
+      "id": "auto_1779344271650_80",
+      "query": "杨晓龙和杨坤本月审批工单数量",
+      "normalized_query": "杨晓龙和杨坤本月审批工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 14,
+      "created_at": "2026-05-21 14:17:51",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779344310433_81": {
+      "id": "auto_1779344310433_81",
+      "query": "杨晓龙和杨坤本周审批工单数量",
+      "normalized_query": "杨晓龙和杨坤本周审批工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 2,
+      "created_at": "2026-05-21 14:18:30",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779344824123_82": {
+      "id": "auto_1779344824123_82",
+      "query": "各部门本月工单处理情况",
+      "normalized_query": "各部门本月工单处理情况",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-21 14:27:04",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 4
+    },
+    "auto_1779345503233_83": {
+      "id": "auto_1779345503233_83",
+      "query": "杨坤本月工单审批数量",
+      "normalized_query": "杨坤本月工单审批数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 3,
+      "created_at": "2026-05-21 14:38:23",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779347199951_84": {
+      "id": "auto_1779347199951_84",
+      "query": "各部门本周工单处理情况",
+      "normalized_query": "各部门本周工单处理情况",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 10,
+      "created_at": "2026-05-21 15:06:39",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779347544328_85": {
+      "id": "auto_1779347544328_85",
+      "query": "CI部门在昨天的审批工单数量",
+      "normalized_query": "ci部门在昨天的审批工单数量",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 3,
+      "created_at": "2026-05-21 15:12:24",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779347572958_86": {
+      "id": "auto_1779347572958_86",
+      "query": "CI部门本周的审批工单数量",
+      "normalized_query": "ci部门本周的审批工单数量",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-21",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 2,
+      "created_at": "2026-05-21 15:12:52",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779347847855_87": {
+      "id": "auto_1779347847855_87",
+      "query": "杨晓龙、杨坤、刘遥远三人本周的工单审批数量",
+      "normalized_query": "杨晓龙、杨坤、刘遥远三人本周的工单审批数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 6,
+      "created_at": "2026-05-21 15:17:27",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779348096122_88": {
+      "id": "auto_1779348096122_88",
+      "query": "杨晓龙4月份审批工单数量",
+      "normalized_query": "杨晓龙4月份审批工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-04-01",
+        "end_time": "2026-04-30"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 9,
+      "created_at": "2026-05-21 15:21:36",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779348368807_89": {
+      "id": "auto_1779348368807_89",
+      "query": "刘遥远上月审批工单情况",
+      "normalized_query": "刘遥远上月审批工单情况",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-04-01",
+        "end_time": "2026-04-30"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 11,
+      "created_at": "2026-05-21 15:26:08",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779349142892_90": {
+      "id": "auto_1779349142892_90",
+      "query": "杨坤上月审批工单情况",
+      "normalized_query": "杨坤上月审批工单情况",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-04-01",
+        "end_time": "2026-04-30"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 3,
+      "created_at": "2026-05-21 15:39:02",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779349540142_91": {
+      "id": "auto_1779349540142_91",
+      "query": "杨坤本月审批工单情况",
+      "normalized_query": "杨坤本月审批工单情况",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 3,
+      "created_at": "2026-05-21 15:45:40",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779351905385_92": {
+      "id": "auto_1779351905385_92",
+      "query": "OM部门工单统计",
+      "normalized_query": "om部门工单统计",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "dept": "OM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-21 16:25:05",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779354838203_93": {
+      "id": "auto_1779354838203_93",
+      "query": "杨晓龙本周完成工单数量",
+      "normalized_query": "杨晓龙本周完成工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-18",
+        "end_time": "2026-05-21"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-21 17:13:58",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779355310662_94": {
+      "id": "auto_1779355310662_94",
+      "query": "CI部门本月工单数量",
+      "normalized_query": "ci部门本月工单数量",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-21",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 2,
+      "created_at": "2026-05-21 17:21:50",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779355601879_95": {
+      "id": "auto_1779355601879_95",
+      "query": "杨晓龙上周工单审批数量",
+      "normalized_query": "杨晓龙上周工单审批数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-11",
+        "end_time": "2026-05-17"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 8,
+      "created_at": "2026-05-21 17:26:41",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779355625355_96": {
+      "id": "auto_1779355625355_96",
+      "query": "杨晓龙和杨坤上周工单处理数量",
+      "normalized_query": "杨晓龙和杨坤上周工单处理数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-11",
+        "end_time": "2026-05-17"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 11,
+      "created_at": "2026-05-21 17:27:05",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779411388066_97": {
+      "id": "auto_1779411388066_97",
+      "query": "CI部门本月完成工单数量最多的员工",
+      "normalized_query": "ci部门本月完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-22",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 37,
+      "created_at": "2026-05-22 08:56:28",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779411705178_98": {
+      "id": "auto_1779411705178_98",
+      "query": "杨晓龙上周完成工单数量",
+      "normalized_query": "杨晓龙上周完成工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-11",
+        "end_time": "2026-05-17"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 8,
+      "created_at": "2026-05-22 09:01:45",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 1
+    },
+    "auto_1779415572199_99": {
+      "id": "auto_1779415572199_99",
+      "query": "杨晓龙和刘遥远上周完成工单数量",
+      "normalized_query": "杨晓龙和刘遥远上周完成工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-11",
+        "end_time": "2026-05-17"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 16,
+      "created_at": "2026-05-22 10:06:12",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779415699367_100": {
+      "id": "auto_1779415699367_100",
+      "query": "设备管理部上周完成工单数量和具体人员名单",
+      "normalized_query": "设备管理部上周完成工单数量和具体人员名单",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-11",
+        "end_time": "2026-05-17",
+        "dept": "FM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 38,
+      "created_at": "2026-05-22 10:08:19",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779415817127_101": {
+      "id": "auto_1779415817127_101",
+      "query": "设备管理部上周完成工单数量最多的员工",
+      "normalized_query": "设备管理部上周完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-11",
+        "end_time": "2026-05-17",
+        "dept": "FM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 38,
+      "created_at": "2026-05-22 10:10:17",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779415864090_102": {
+      "id": "auto_1779415864090_102",
+      "query": "设备管理部上周完成工单数量最多的员工（只看执行节点）",
+      "normalized_query": "设备管理部上周完成工单数量最多的员工（只看执行节点）",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "FM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 113,
+      "created_at": "2026-05-22 10:11:04",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779416015605_103": {
+      "id": "auto_1779416015605_103",
+      "query": "设备管理部工单总耗时超过一周的数量和员工",
+      "normalized_query": "设备管理部工单总耗时超过一周的数量和员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "FM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 113,
+      "created_at": "2026-05-22 10:13:35",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779416054065_104": {
+      "id": "auto_1779416054065_104",
+      "query": "设备管理部工单平均耗时超过一周的数量和员工",
+      "normalized_query": "设备管理部工单平均耗时超过一周的数量和员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "FM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 113,
+      "created_at": "2026-05-22 10:14:14",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779416127335_105": {
+      "id": "auto_1779416127335_105",
+      "query": "设备管理部已完成工单平均耗时超过一周的数据",
+      "normalized_query": "设备管理部已完成工单平均耗时超过一周的数据",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "FM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 113,
+      "created_at": "2026-05-22 10:15:27",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779419005713_106": {
+      "id": "auto_1779419005713_106",
+      "query": "杨晓龙本月工单审批数量排名",
+      "normalized_query": "杨晓龙本月工单审批数量排名",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-22"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 11,
+      "created_at": "2026-05-22 11:03:25",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779419369822_107": {
+      "id": "auto_1779419369822_107",
+      "query": "VM部门昨天为止工单数量",
+      "normalized_query": "vm部门昨天为止工单数量",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "dept": "VM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 4,
+      "created_at": "2026-05-22 11:09:29",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779419399968_108": {
+      "id": "auto_1779419399968_108",
+      "query": "QA部门过去7天工单数量",
+      "normalized_query": "qa部门过去7天工单数量",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {
+        "start_time": "2026-05-15",
+        "end_time": "2026-05-22",
+        "dept": "QA"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 2,
+      "created_at": "2026-05-22 11:09:59",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779420431237_109": {
+      "id": "auto_1779420431237_109",
+      "query": "QA部门本月员工完成工单排名",
+      "normalized_query": "qa部门本月员工完成工单排名",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-22",
+        "dept": "QA"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 59,
+      "created_at": "2026-05-22 11:27:11",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779848008314_110": {
+      "id": "auto_1779848008314_110",
+      "query": "杨晓龙和刘遥远本周工单处理数量",
+      "normalized_query": "杨晓龙和刘遥远本周工单处理数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-25",
+        "end_time": "2026-05-27"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 6,
+      "created_at": "2026-05-27 10:13:28",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779951845527_111": {
+      "id": "auto_1779951845527_111",
+      "query": "杨晓龙和刘遥远本周的工单处理数量",
+      "normalized_query": "杨晓龙和刘遥远本周的工单处理数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-25",
+        "end_time": "2026-05-28"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 8,
+      "created_at": "2026-05-28 15:04:05",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779951941111_112": {
+      "id": "auto_1779951941111_112",
+      "query": "本周CI部门完成工单数量最多的员工",
+      "normalized_query": "本周ci部门完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-25",
+        "end_time": "2026-05-28",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 16,
+      "created_at": "2026-05-28 15:05:41",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779952222878_113": {
+      "id": "auto_1779952222878_113",
+      "query": "本周完成工单数量最多的员工",
+      "normalized_query": "本周完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-25",
+        "end_time": "2026-05-28"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 154,
+      "created_at": "2026-05-28 15:10:22",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779953075867_114": {
+      "id": "auto_1779953075867_114",
+      "query": "谁审批工单最慢",
+      "normalized_query": "谁审批工单最慢",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 993,
+      "created_at": "2026-05-28 15:24:35",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779953158005_115": {
+      "id": "auto_1779953158005_115",
+      "query": "本月自控信息部工单时间分布",
+      "normalized_query": "本月自控信息部工单时间分布",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-28",
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-28 15:25:58",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779953885042_116": {
+      "id": "auto_1779953885042_116",
+      "query": "四月份哪天完成工单最多 分别哪些人在做",
+      "normalized_query": "四月份哪天完成工单最多 分别哪些人在做",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 993,
+      "created_at": "2026-05-28 15:38:05",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779968495106_117": {
+      "id": "auto_1779968495106_117",
+      "query": "5月处理工单数量最多的员工是谁？",
+      "normalized_query": "5月处理工单数量最多的员工是谁",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-01",
+        "end_time": "2026-05-31"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 545,
+      "created_at": "2026-05-28 19:41:35",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1779968700441_118": {
+      "id": "auto_1779968700441_118",
+      "query": "4月哪天处理的工单最多？其中哪个部门处理的最多？",
+      "normalized_query": "4月哪天处理的工单最多其中哪个部门处理的最多",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-04-01",
+        "end_time": "2026-04-30"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 552,
+      "created_at": "2026-05-28 19:45:00",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 2
+    },
+    "auto_1779969689625_119": {
+      "id": "auto_1779969689625_119",
+      "query": "杨晓龙本周处理工单数量",
+      "normalized_query": "杨晓龙本周处理工单数量",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-25",
+        "end_time": "2026-05-28"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 6,
+      "created_at": "2026-05-28 20:01:29",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780036063190_120": {
+      "id": "auto_1780036063190_120",
+      "query": "4月CI部门完成工单数量最多的员工",
+      "normalized_query": "4月ci部门完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 74,
+      "created_at": "2026-05-29 14:27:43",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780036098035_121": {
+      "id": "auto_1780036098035_121",
+      "query": "4月份CI部门完成工单数量最多的员工",
+      "normalized_query": "4月份ci部门完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 74,
+      "created_at": "2026-05-29 14:28:18",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780036129033_122": {
+      "id": "auto_1780036129033_122",
+      "query": "CI部门在四月份完成工单数量最多的员工",
+      "normalized_query": "ci部门在四月份完成工单数量最多的员工",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 74,
+      "created_at": "2026-05-29 14:28:49",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780038313057_123": {
+      "id": "auto_1780038313057_123",
+      "query": "4月处理的工单总数是多少？",
+      "normalized_query": "4月处理的工单总数是多少",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-29 15:05:13",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780038338558_124": {
+      "id": "auto_1780038338558_124",
+      "query": "CI部门4月工单情况",
+      "normalized_query": "ci部门4月工单情况",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {
+        "dept": "CI"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-29 15:05:38",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780038381428_125": {
+      "id": "auto_1780038381428_125",
+      "query": "各部门工单数量排名",
+      "normalized_query": "各部门工单数量排名",
+      "api_id": "各部门工单处理情况_区块二_工单效能看板",
+      "api_name": "各部门工单处理情况（区块二）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 12,
+      "created_at": "2026-05-29 15:06:21",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780038456466_126": {
+      "id": "auto_1780038456466_126",
+      "query": "4月处理工单最多的员工是谁？",
+      "normalized_query": "4月处理工单最多的员工是谁",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "employee",
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 1011,
+      "created_at": "2026-05-29 15:07:36",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780038489654_127": {
+      "id": "auto_1780038489654_127",
+      "query": "4月处理工单最少的部门是哪个？",
+      "normalized_query": "4月处理工单最少的部门是哪个",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 1011,
+      "created_at": "2026-05-29 15:08:09",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780038516565_128": {
+      "id": "auto_1780038516565_128",
+      "query": "运行保障部4月工单大类分布",
+      "normalized_query": "运行保障部4月工单大类分布",
+      "api_id": "工单大类下拉框_工单效能看板",
+      "api_name": "工单大类下拉框",
+      "parameters": {
+        "dept": "OM"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder"
+      ],
+      "success": true,
+      "data_count": 53,
+      "created_at": "2026-05-29 15:08:36",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780038556804_129": {
+      "id": "auto_1780038556804_129",
+      "query": "4月和3月工单数量对比",
+      "normalized_query": "4月和3月工单数量对比",
+      "api_id": "工单数量统计_区块三_工单效能看板",
+      "api_name": "工单数量统计（区块三）",
+      "parameters": {},
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 8,
+      "created_at": "2026-05-29 15:09:16",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780038637859_130": {
+      "id": "auto_1780038637859_130",
+      "query": "4月工单总数",
+      "normalized_query": "4月工单总数",
+      "api_id": "关键指标汇总_区块一_工单效能看板",
+      "api_name": "关键指标汇总（区块一）",
+      "parameters": {
+        "start_time": "2026-04-01",
+        "end_time": "2026-04-30"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "workorder",
+        "statistics"
+      ],
+      "success": true,
+      "data_count": 1,
+      "created_at": "2026-05-29 15:10:37",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    },
+    "auto_1780276847604_131": {
+      "id": "auto_1780276847604_131",
+      "query": "上周杨晓龙处理了多少工单数量？跟刘遥远对比如何",
+      "normalized_query": "上周杨晓龙处理了多少工单数量跟刘遥远对比如何",
+      "api_id": "部门人均效能_区块四_工单效能看板",
+      "api_name": "部门人均效能（区块四）",
+      "parameters": {
+        "start_time": "2026-05-25",
+        "end_time": "2026-05-31"
+      },
+      "analysis_type": "",
+      "department": "",
+      "tags": [
+        "efficiency",
+        "workorder",
+        "department"
+      ],
+      "success": true,
+      "data_count": 10,
+      "created_at": "2026-06-01 09:20:47",
+      "source": "auto",
+      "confidence": 0.8,
+      "usage_count": 0
+    }
+  },
+  "stats": {
+    "total": 132,
+    "by_source": {
+      "seed": 21,
+      "auto": 111
+    },
+    "by_analysis_type": {
+      "extreme": 4,
+      "ranking": 3,
+      "comparison": 3,
+      "statistic": 6,
+      "trend": 2,
+      "list": 3,
+      "": 111
+    },
+    "by_department": {
+      "CI": 3,
+      "OM": 2,
+      "QA": 2,
+      "PD": 1,
+      "RD": 1,
+      "QC": 1,
+      "PM": 2,
+      "HR": 2,
+      "FIN": 1
+    },
+    "retriever_stats": {
+      "doc_count": 132,
+      "vocab_size": 384,
+      "built": true
+    },
+    "store_path": "data/example_store.json"
+  }
+}

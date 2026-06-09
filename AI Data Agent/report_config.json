@@ -1,0 +1,418 @@
+{
+  "_meta": {
+    "generated_from": "cpt_scan",
+    "description": "帆软开放平台API调用映射配置",
+    "usage": "策略0优先使用此配置调用 Sql数据服务API",
+    "api_endpoint": "/sp/client/api/sql/data",
+    "auth_method": "AkSk",
+    "note": "每个报表可配多个数据集; connection和sql在调用时动态传入"
+  },
+  "connections": {
+    "WMS_PROD": {
+      "tables_used": [
+        "BAS_SKU",
+        "BAS_SKU_MULTIWAREHOUSE",
+        "BSM_USER_LOGINOK",
+        "DOC_ASN_DETAILS",
+        "INV_LOT_LOC_ID",
+        "ZXJT_FR_BULLETIN",
+        "ZXJT_WMSXCL"
+      ],
+      "report_count": 20
+    },
+    "EAM": {
+      "tables_used": [
+        "ATUSERS",
+        "ATWORKFLOW",
+        "ATWORKFLOWNODES",
+        "ATWORKFLOWRECORDS",
+        "ATWORKFLOWSTATUS"
+      ],
+      "report_count": 1,
+      "description": "EAM设备管理数据库，通过sql/query_eam端点访问(GET方法)，connection=EAM"
+    },
+    "ekp": {
+      "tables_used": [],
+      "report_count": 2
+    }
+  },
+  "reports": {
+    "产品信息维护": {
+      "filename": "产品信息维护.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "",
+      "datasets": [
+        {
+          "name": "ds1",
+          "connection": "WMS_PROD",
+          "table": "",
+          "sql_template": "select * from dbo.ZXJT_FR_PRODUCT where ISVISIABLE = 1",
+          "params": []
+        }
+      ]
+    },
+    "工单效能看板": {
+      "filename": "工单效能看板.fvs",
+      "report_path": "/部分报表/工单效能看板.fvs",
+      "primary_connection": "EAM",
+      "primary_table": "ATWORKFLOWRECORDS",
+      "description": "EAM工单效能分析大屏，展示各部门/人员工单处理效率、耗时分布、完成情况等关键指标",
+      "datasets": [
+        {
+          "name": "关键指标汇总（区块一）",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "WITH Ordered AS ( SELECT RECCODE, RECFLOCODE, RECFROMSTATUS, CREATEDBY, RECFLONODE AS OldNode, LASTSAVED, ROW_NUMBER() OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY LASTSAVED, RECCODE) AS NewNode FROM ATWORKFLOWRECORDS ), ProcessTime AS ( SELECT RECCODE, RECFLOCODE, RECFROMSTATUS, CREATEDBY, NewNode, LASTSAVED AS ApprovalTime, LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) AS CreateTime, CASE WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) IS NOT NULL THEN DATEDIFF(HOUR, LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode), LASTSAVED) ELSE NULL END AS ProcessHours, CASE WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) IS NOT NULL THEN ROUND(DATEDIFF(MINUTE, LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode), LASTSAVED) / 1440.0, 2) ELSE NULL END AS ProcessDays FROM Ordered ), data_all AS ( SELECT RECCODE, RECFLOCODE, CREATEDBY, CreateTime, ApprovalTime, ProcessHours, ProcessDays FROM ProcessTime WHERE CreateTime IS NOT NULL AND ProcessDays > 0 ) SELECT COUNT(DISTINCT da.RECCODE + '|' + da.RECFLOCODE) AS 工单数量, ROUND(SUM(da.ProcessDays), 3) AS 总耗时, ROUND(AVG(da.ProcessDays), 3) AS 平均耗时, COUNT(DISTINCT da.CREATEDBY) AS 处理人数, ROUND(COUNT(DISTINCT da.RECCODE + '|' + da.RECFLOCODE) * 1.0 / NULLIF(COUNT(DISTINCT da.CREATEDBY), 0), 3) AS 人均工单, CASE WHEN AVG(da.ProcessDays) <= 0.125 THEN '极速处理' WHEN AVG(da.ProcessDays) <= 1 THEN '快速处理' WHEN AVG(da.ProcessDays) <= 5 THEN '正常处理' WHEN AVG(da.ProcessDays) <= 10 THEN '较慢处理' WHEN AVG(da.ProcessDays) <= 30 THEN '滞后处理' WHEN AVG(da.ProcessDays) <= 90 THEN '严重滞后' WHEN AVG(da.ProcessDays) > 90 THEN '超长滞留' ELSE '未知' END AS 效能区间 FROM data_all da LEFT JOIN ATUSERS au ON da.CREATEDBY = au.USRCODE LEFT JOIN ATWORKFLOW af ON da.RECFLOCODE = af.FLOCODE WHERE au.USRDESC IS NOT NULL -- 部门筛选  -- 流程类型筛选  -- 时间范围筛选（基于节点审批时间）",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "flow_type",
+            "flow_category"
+          ]
+        },
+        {
+          "name": "各部门工单处理情况（区块二）",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "-- 参数：${flow_type} - 工单子类, ${dept} - 部门, ${start_time} - 开始时间, ${end_time} - 结束时间\nWITH Ordered AS ( \n    SELECT \n        WR.RECCODE, \n        WR.RECFLOCODE, \n        WR.CREATEDBY, \n        WR.LASTSAVED, \n        ROW_NUMBER() OVER (PARTITION BY WR.RECCODE, WR.RECFLOCODE ORDER BY WR.LASTSAVED, WR.RECCODE) AS NewNode \n    FROM ATWORKFLOWRECORDS WR \n    LEFT JOIN ATWORKFLOW AF ON WR.RECFLOCODE = AF.FLOCODE \nwhere 1=1 ${if(len(flow_type)>0,\" and AF.FLODESC in ('\"+SUBSTITUTE(flow_type,\",\",\"','\")+\"') \" ,\"\")}     \n), \nProcessTime AS ( \n    SELECT \n        RECCODE, \n        RECFLOCODE, \n        CREATEDBY, \n        LASTSAVED AS ApprovalTime,\n        LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) AS CreateTime, \n        CASE \n            WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) IS NOT NULL \n            THEN ROUND(CAST(DATEDIFF(MINUTE, \n                 LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode), \n                 LASTSAVED) AS FLOAT) / 1440.0, 2) \n            ELSE NULL \n        END AS ProcessDays \n    FROM Ordered \n), \ndata_all AS (\n    SELECT \n        RECCODE,\n        RECFLOCODE,\n        CREATEDBY,\n        ApprovalTime,\n        CreateTime,\n        ProcessDays\n    FROM ProcessTime \n    WHERE CreateTime IS NOT NULL \n      AND ProcessDays > 0  -- 添加此条件\n)\nSELECT \n    AU.USRMRC as dept_code, \n    COUNT(DISTINCT da.RECCODE + '|' + da.RECFLOCODE) as order_count, \n    ROUND(SUM(da.ProcessDays), 3) as total_process_days, \n    ROUND(AVG(da.ProcessDays), 3) as avg_process_days, \n    COUNT(DISTINCT da.CREATEDBY) as user_count \nFROM data_all da \nLEFT JOIN ATUSERS AU ON da.CREATEDBY = AU.USRCODE \nLEFT JOIN ATWORKFLOW AF ON da.RECFLOCODE = AF.FLOCODE\nWHERE AU.USRDESC IS NOT NULL  -- 添加此条件\n  AND AU.USRMRC IS NOT NULL \n  AND AU.USRMRC <> '*'\n  -- 部门筛选\n  --${if(len(dept)>0,\" AND AU.USRMRC IN ('\"+SUBSTITUTE(dept,\",\",\"','\")+\"') \" ,\"\")}\n  -- 时间范围筛选\n  ${if(len(start_time)==0,if(len(end_time)==0,\"\",\"AND da.ApprovalTime <= '\"+end_time+\"'\"),if(len(end_time)==0,\"AND da.ApprovalTime >= '\"+start_time+\"'\",\"AND da.ApprovalTime BETWEEN '\"+start_time+ \"' AND '\"+end_time+\"'\"))}\nGROUP BY AU.USRMRC \nORDER BY avg_process_days ASC",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "flow_type",
+            "flow_category"
+          ]
+        },
+        {
+          "name": "处理时长分布图（区块三）",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "WITH Ordered AS (\n    SELECT\n        RECCODE,\n        RECFLOCODE,\n        RECFROMSTATUS,\n        CREATEDBY,\n        RECFLONODE AS OldNode,\n        LASTSAVED,\n        ROW_NUMBER() OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY LASTSAVED, RECCODE) AS NewNode\n    FROM ATWORKFLOWRECORDS\n),\nProcessTime AS (\n    SELECT\n        RECCODE,\n        RECFLOCODE,\n        RECFROMSTATUS,\n        CREATEDBY,\n        NewNode,\n        LASTSAVED AS ApprovalTime,\n        LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) AS CreateTime,\n        -- 计算处理时长（小时）\n        CASE\n            WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) IS NOT NULL\n            THEN DATEDIFF(HOUR,\n                 LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode),\n                 LASTSAVED)\n            ELSE NULL\n        END AS ProcessHours,\n        -- 计算处理时长（天，保留2位小数，与区块四完全一致）\n        CASE\n            WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) IS NOT NULL\n            THEN ROUND(DATEDIFF(MINUTE,\n                 LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode),\n                 LASTSAVED) / 1440.0, 2)\n            ELSE NULL\n        END AS ProcessDays\n    FROM Ordered\n),\ndata_all AS (\n    SELECT \n        RECCODE,\n        RECFLOCODE,\n        RECFROMSTATUS,\n        CREATEDBY,\n        NewNode,\n        CreateTime,\n        ApprovalTime,\n        ProcessHours,\n        ProcessDays,\n        -- 处理时长分类（中文描述）\n        CASE\n            WHEN ProcessHours <= 3 THEN '3小时内'\n            WHEN ProcessDays <= 1 THEN '3小时到1天'\n            WHEN ProcessDays <= 5 THEN '1天到5天'\n            WHEN ProcessDays <= 10 THEN '5天到10天'\n            WHEN ProcessDays <= 30 THEN '10天到30天'\n            WHEN ProcessDays <= 90 THEN '30天到90天'\n            WHEN ProcessDays > 90 THEN '大于90天'\n            ELSE '未分类'\n        END AS ProcessTimeCategory,\n        -- 处理时长区间标识（简版，用于图表）\n        CASE\n            WHEN ProcessHours <= 3 THEN '≤3h'\n            WHEN ProcessDays <= 1 THEN '3h-1d'\n            WHEN ProcessDays <= 5 THEN '1-5d'\n            WHEN ProcessDays <= 10 THEN '5-10d'\n            WHEN ProcessDays <= 30 THEN '10-30d'\n            WHEN ProcessDays <= 90 THEN '30-90d'\n            ELSE '>90d'\n        END AS TimeRangeLabel\n    FROM ProcessTime\n    WHERE CreateTime IS NOT NULL\n      AND ProcessDays > 0\n)\nSELECT \n    da.TimeRangeLabel AS 时间区间,\n    COUNT(0) AS 节点数量\nFROM data_all da\nLEFT JOIN ATWORKFLOW af ON da.RECFLOCODE = af.FLOCODE\nLEFT JOIN ATUSERS au ON da.CREATEDBY = au.USRCODE\nWHERE au.USRDESC IS NOT NULL\n  AND da.ProcessDays > 0\n  -- 部门筛选（与区块四完全一致）\n  ${if(len(dept)>0,\" AND au.USRMRC IN ('\"+SUBSTITUTE(dept,\",\",\"','\")+\"') \" ,\"\")}\n  -- 流程类型筛选\n  ${if(len(flow_type)>0,\" AND af.FLODESC IN ('\"+SUBSTITUTE(flow_type,\",\",\"','\")+\"') \" ,\"\")}\n  -- 时间范围筛选\n  ${if(len(start_time)==0,if(len(end_time)==0,\"\",\"AND da.ApprovalTime <= '\"+end_time+\"'\"),if(len(end_time)==0,\"AND da.ApprovalTime >= '\"+start_time+\"'\",\"AND da.ApprovalTime BETWEEN '\"+start_time+ \"' AND '\"+end_time+\"'\"))}\nGROUP BY da.TimeRangeLabel\nORDER BY \n    CASE da.TimeRangeLabel\n        WHEN '≤3h' THEN 1\n        WHEN '3h-1d' THEN 2\n        WHEN '1-5d' THEN 3\n        WHEN '5-10d' THEN 4\n        WHEN '10-30d' THEN 5\n        WHEN '30-90d' THEN 6\n        WHEN '>90d' THEN 7\n        ELSE 8\n    END",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "flow_type",
+            "flow_category"
+          ]
+        },
+        {
+          "name": "工单数量统计（区块三）",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "WITH Ordered AS (\n    SELECT\n        RECCODE,\n        RECFLOCODE,\n        RECFROMSTATUS,\n        CREATEDBY,\n        RECFLONODE AS OldNode,\n        LASTSAVED,\n        ROW_NUMBER() OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY LASTSAVED, RECCODE) AS NewNode\n    FROM ATWORKFLOWRECORDS\n),\nProcessTime AS (\n    SELECT\n        RECCODE,\n        RECFLOCODE,\n        RECFROMSTATUS,\n        CREATEDBY,\n        NewNode,\n        LASTSAVED AS ApprovalTime,\n        LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) AS CreateTime,\n        CASE\n            WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) IS NOT NULL\n            THEN DATEDIFF(HOUR,\n                 LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode),\n                 LASTSAVED)\n            ELSE NULL\n        END AS ProcessHours,\n        CASE\n            WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) IS NOT NULL\n            THEN ROUND(DATEDIFF(MINUTE,\n                 LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode),\n                 LASTSAVED) / 1440.0, 2)\n            ELSE NULL\n        END AS ProcessDays\n    FROM Ordered\n),\ndata_all AS (\n    SELECT \n        RECCODE,\n        RECFLOCODE,\n        CREATEDBY,\n        CreateTime,\n        ApprovalTime,\n        ProcessHours,\n        ProcessDays\n    FROM ProcessTime\n    WHERE CreateTime IS NOT NULL\n      AND ProcessDays > 0\n),\n-- 获取每个工单的工单大类（去重）\nworkflow_entity AS (\n    SELECT DISTINCT\n        da.RECCODE,\n        da.RECFLOCODE,\n        af.FLOENTITYDESC AS 工单大类\n    FROM data_all da\n    LEFT JOIN ATWORKFLOW af ON da.RECFLOCODE = af.FLOCODE\n    LEFT JOIN ATUSERS au ON da.CREATEDBY = au.USRCODE\n    WHERE au.USRDESC IS NOT NULL\n      -- 部门筛选\n      ${if(len(dept)>0,\" AND au.USRMRC IN ('\"+SUBSTITUTE(dept,\",\",\"','\")+\"') \" ,\"\")}\n      -- 流程类型筛选（若需要，取消注释即可）\n      -- ${if(len(flow_type)>0,\" AND af.FLODESC IN ('\"+SUBSTITUTE(flow_type,\",\",\"','\")+\"') \" ,\"\")}\n      -- 时间范围筛选\n      ${if(len(start_time)==0,if(len(end_time)==0,\"\",\"AND da.ApprovalTime <= '\"+end_time+\"'\"),if(len(end_time)==0,\"AND da.ApprovalTime >= '\"+start_time+\"'\",\"AND da.ApprovalTime BETWEEN '\"+start_time+ \"' AND '\"+end_time+\"'\"))}\n)\nSELECT\n    工单大类,\n    COUNT(DISTINCT RECCODE + '|' + RECFLOCODE) AS 工单数量\nFROM workflow_entity\nGROUP BY 工单大类\nORDER BY 工单数量 DESC",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "flow_type",
+            "flow_category"
+          ]
+        },
+        {
+          "name": "部门人均效能（区块四）",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "WITH Ordered AS (\n    SELECT\n        af.RECCODE,\n        af.RECFLOCODE,\n        aw.noddesc as RECFROMSTATUS,\n        af.CREATEDBY,\n        af.RECFLONODE AS OldNode,\n        af.LASTSAVED,\n        ROW_NUMBER() OVER (PARTITION BY af.RECCODE,af.RECFLOCODE ORDER BY af.LASTSAVED, af.RECCODE) AS NewNode\n    FROM ATWORKFLOWRECORDS af left join ATWORKFLOWNODES aw on af.RECFLOCODE = aw.NODCODE and af.RECFROMSTATUS = aw.NODEAMSTATUS\n),\nProcessTime AS (\n    SELECT\n        RECCODE,\n        RECFLOCODE,\n        RECFROMSTATUS,\n        CREATEDBY,\n        NewNode,\n        LASTSAVED AS ApprovalTime,\n        LAG(LASTSAVED) OVER (PARTITION BY RECCODE,RECFLOCODE ORDER BY NewNode) AS CreateTime,\n        -- 计算处理时长（小时）\n        CASE\n            WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE,RECFLOCODE ORDER BY NewNode) IS NOT NULL\n            THEN DATEDIFF(HOUR,\n                 LAG(LASTSAVED) OVER (PARTITION BY RECCODE,RECFLOCODE ORDER BY NewNode),\n                 LASTSAVED)\n            ELSE NULL\n        END AS ProcessHours,\n        -- 计算处理时长（天，保留2位小数）\n        CASE\n            WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE,RECFLOCODE ORDER BY NewNode) IS NOT NULL\n            THEN ROUND(DATEDIFF(MINUTE,\n                 LAG(LASTSAVED) OVER (PARTITION BY RECCODE,RECFLOCODE ORDER BY NewNode),\n                 LASTSAVED) / 1440.0, 2)\n            ELSE NULL\n        END AS ProcessDays\n    FROM Ordered\n),\ndata_all as (SELECT RECCODE,       -- 流程编码\n                    RECFLOCODE,    -- 流程类型\n                    RECFROMSTATUS, -- 起始状态\n                    CREATEDBY,     -- 操作人\n                    NewNode,       -- 节点序号\n                    CreateTime,    -- 节点开始时间\n                    ApprovalTime,  -- 节点结束时间（批准时间）\n                    ProcessHours,  -- 处理时长（小时）\n                    ProcessDays,   -- 处理时长（天）\n\n                    -- 处理时长分类（按新规则）\n                    CASE\n                        WHEN ProcessHours <= 72 THEN '3小时内' -- ≤3小时\n                        WHEN ProcessDays <= 1 THEN '3小时到1天' -- 3小时~1天(24小时)\n                        WHEN ProcessDays <= 5 THEN '1天到5天' -- 1~5天\n                        WHEN ProcessDays <= 10 THEN '5天到10天' -- 5~10天\n                        WHEN ProcessDays <= 30 THEN '10天到30天' -- 10~30天\n                        WHEN ProcessDays <= 90 THEN '30天到90天' -- 30~90天\n                        WHEN ProcessDays > 90 THEN '大于90天' -- >90天\n                        ELSE '未分类'\n                        END AS ProcessTimeCategory,\n\n                    -- 是否超时（假设SLA为3天）\n                    CASE\n                        WHEN ProcessDays > 3 THEN 1\n                        ELSE 0\n                        END AS IsSLAExceeded,\n\n                    -- 处理时长区间标识（简版，用于图表）\n                    CASE\n                        WHEN ProcessHours <= 72 THEN '≤3h'\n                        WHEN ProcessDays <= 1 THEN '3h-1d'\n                        WHEN ProcessDays <= 5 THEN '1-5d'\n                        WHEN ProcessDays <= 10 THEN '5-10d'\n                        WHEN ProcessDays <= 30 THEN '10-30d'\n                        WHEN ProcessDays <= 90 THEN '30-90d'\n                        ELSE '>90d'\n                        END AS TimeRangeLabel\n\n             FROM ProcessTime\n             WHERE CreateTime IS NOT NULL\n             AND ProcessDays > 0  -- 过滤首节点（无开始时间）\n             )\nselect AU.USRDESC,RECFROMSTATUS,sum(DA.ProcessDays) as 总耗时,avg(DA.ProcessDays) as 平均耗时,count(0) as 审批数量 from data_all da\n    left join ATWORKFLOW AF on DA.RECFLOCODE = AF.FLOCODE LEFT JOIN ATUSERS AU ON DA.CREATEDBY = AU.USRCODE WHERE USRDESC IS NOT NULL AND ProcessDays > 0\n${if(len(dept)>0,\" and au.USRMRC in ('\"+SUBSTITUTE(dept,\",\",\"','\")+\"') \" ,\"\")}  \n${if(len(RECFROMSTATUS)>0,\" and RECFROMSTATUS in ('\"+SUBSTITUTE(RECFROMSTATUS,\",\",\"','\")+\"') \" ,\"\")}  \n${if(len(flow_type)>0,\" and AF.FLODESC in ('\"+SUBSTITUTE(flow_type,\",\",\"','\")+\"') \" ,\"\")}                  \n  ${if(len(start_time)==0,if(len(end_time)==0,\"\",\"and da.ApprovalTime <= '\"+end_time+\"'\" ),if(len(end_time)==0,\"and da.ApprovalTime >= '\"+start_time+\"'\",\"and da.ApprovalTime between '\"+start_time+ \"' and '\"+end_time+\"'\"))}              \n GROUP BY AU.USRDESC,RECFROMSTATUS\n order by count(0) desc",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "flow_type",
+            "flow_category"
+          ]
+        },
+        {
+          "name": "工单完成情况",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "WITH workflow_status AS (\n    SELECT\n        af.wfscode,              -- 工单唯一标识，输出列名 wfscode\n        af.WFSFLOCODE,            -- 流程代码\n        af.WFSSTATUS,\n        at.FLODESC AS 流程类型,\n        af.LASTSAVED,\n        CASE \n            WHEN RIGHT(af.WFSSTATUS, 2) = 'WC' THEN '已完成'\n            ELSE '未完成'\n        END AS 完成状态\n    FROM ATWORKFLOWSTATUS af\n    LEFT JOIN ATWORKFLOWNODES aw\n        ON af.WFSFLOCODE = aw.NODCODE\n        AND af.WFSSTATUS = aw.NODEAMSTATUS\n    LEFT JOIN ATWORKFLOW at\n        ON at.FLOCODE = af.WFSFLOCODE\n        AND at.FLOCODE = aw.NODCODE\n    WHERE aw.noddesc NOT LIKE N'%取消%'\n      AND af.WFSSTATUS IS NOT NULL\n      AND at.FLODESC IS NOT NULL\n      ${if(len(start_time)==0,if(len(end_time)==0,\"\",\"AND af.LASTSAVED <= '\"+end_time+\"'\"),if(len(end_time)==0,\"AND af.LASTSAVED >= '\"+start_time+\"'\",\"AND af.LASTSAVED BETWEEN '\"+start_time+ \"' AND '\"+end_time+\"'\"))}\n)\nSELECT\n    LEFT(流程类型, 7) AS 流程类型,\n    完成状态,\n    COUNT(DISTINCT wfscode + '|' + WFSFLOCODE) AS 工单数量   -- 直接使用列名，不加表别名\nFROM workflow_status\nWHERE 1=1\n    ${if(len(flow_type)>0,\" AND 流程类型 IN ('\"+SUBSTITUTE(flow_type,\",\",\"','\")+\"') \" ,\"\")}\nGROUP BY 流程类型, 完成状态\nORDER BY 流程类型, 完成状态",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "flow_type",
+            "flow_category"
+          ]
+        },
+        {
+          "name": "部门下拉框",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "SELECT DISTINCT AU.USRMRC as dept_code, AU.USRMRCDESC as dept_name from ATUSERS AU WHERE AU.USRMRC IS NOT NULL AND AU.USRMRC <> '*' ORDER BY AU.USRMRC",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "flow_type",
+            "flow_category"
+          ]
+        },
+        {
+          "name": "工单大类下拉框",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "SELECT DISTINCT FLOENTITYDESC as flow_category, au.USRMRC FROM ATWORKFLOW AT LEFT JOIN ATWORKFLOWRECORDS af ON af.RECFLOCODE = AT.FLOCODE LEFT JOIN ATUSERS au ON af.CREATEDBY = au.USRCODE WHERE AT.FLOCODE IS NOT NULL and au.USRMRC IS NOT NULL and au.USRMRC <> '*'  ORDER BY FLOENTITYDESC",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "flow_type",
+            "flow_category"
+          ]
+        },
+        {
+          "name": "工单子类下拉框",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "SELECT DISTINCT FLODESC as flow_type, FLOENTITYDESC, AU.USRMRC FROM ATWORKFLOW AT LEFT JOIN ATWORKFLOWRECORDS af ON af.RECFLOCODE = AT.FLOCODE LEFT JOIN ATUSERS au ON af.CREATEDBY = au.USRCODE WHERE FLODESC IS NOT NULL and au.USRMRC is not null and au.USRMRC <> '*'   ORDER BY FLODESC",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "flow_type",
+            "flow_category"
+          ]
+        },
+        {
+          "name": "未完成单据",
+          "connection": "EAM",
+          "table": "",
+          "sql_template": "dbo.ATPRO_WORKFLOW_STATUS_WITH_APPROVERS",
+          "params": []
+        },
+        {
+          "name": "待审批工单列表",
+          "connection": "EAM",
+          "table": "ATWORKFLOWSTATUS",
+          "sql_template": "SELECT r.CREATEDBY, ats.USRMRC, r.WFSSTATUS, AW.noddesc, r.WFSENTITY, r.wfscode, a.FLODESC as WFSFLOCODE, r.LASTSAVED, r.CurrentApproverID, r.CurrentApprover, r.CurrentDepartment, CAST(DATEDIFF(MINUTE, r.LASTSAVED, GETDATE()) AS DECIMAL(10, 4)) / 1440.0 as DaysSinceLastSave FROM ATWORKFLOWSTATUS r LEFT JOIN ATWORKFLOW a ON r.WFSFLOCODE = a.FLOCODE LEFT JOIN ATUSERS ats ON ats.USRCODE = r.CREATEDBY LEFT JOIN ATWORKFLOWNODES aw ON R.WFSFLOCODE = aw.NODCODE AND R.WFSSTATUS = aw.NODEAMSTATUS WHERE CurrentApproverID IS NOT NULL AND CurrentApproverID <> ''",
+          "params": [
+            "start_time",
+            "end_time",
+            "dept",
+            "RECFROMSTATUS",
+            "flow_type"
+          ]
+        }
+      ]
+    },
+    "公告栏编辑": {
+      "filename": "公告栏编辑.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "ZXJT_FR_BULLETIN",
+      "datasets": [
+        {
+          "name": "BULLETIN",
+          "connection": "WMS_PROD",
+          "table": "ZXJT_FR_BULLETIN",
+          "sql_template": "select * from ZXJT_FR_BULLETIN where isvisiable = 1",
+          "params": []
+        }
+      ]
+    },
+    "到岗人数": {
+      "filename": "到岗人数.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "BSM_USER_LOGINOK",
+      "datasets": [
+        {
+          "name": "ds1",
+          "connection": "WMS_PROD",
+          "table": "BSM_USER_LOGINOK",
+          "sql_template": "SELECT\n\nDISTINCT(h2.userName) AS COUNT_PEOPLE\n\nFROM\nBSM_USER_LOGINOK h1\nLEFT JOIN BSM_USER h2\nON\nh1.organizationId = h2.organizationId\nAND h1.userId = h2.userId\nLEFT JOIN BSM_CODE_ML h3\nON\nh1.organizationId = h3.organizationId\nAND h3.codeType = 'USER_LANG'\nAND h1.loginLanguage = h3.codeId\nAND h3.languageId = 'zh_CN'\nLEFT JOIN BSM_CODE_ML h4\nON\nh1.organizationId = h4.organizationId\nAND h4.codeType = 'LOGIN_STS'\nAND h1.loginStatus = h4.codeId\nAND h4.languageId = 'zh_CN'\nWHERE\n1 = 1\nAND h1.organizationId = 'ZXJT'\nAND CAST(loginTime AS DATE) = cast(getdate() as date)\nAND h4.codeDescr = '登录成功'\nAND USERNAME IN (\n'林艳',\n'高静',\n'冯庆武',\n'代远玲',\n'彭琪雲',\n'李美',\n'卢继明',\n'余文利',\n'卓腾祥',\n'董方圆',\n'陈颖',\n'周松',\n'李果'\n)",
+          "params": []
+        }
+      ]
+    },
+    "呆滞物料数据": {
+      "filename": "呆滞物料数据.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "BAS_SKU_MULTIWAREHOUSE",
+      "datasets": [
+        {
+          "name": "呆滞物料明细",
+          "connection": "WMS_PROD",
+          "table": "BAS_SKU_MULTIWAREHOUSE",
+          "sql_template": "/*仓库呆滞物料物资数据占比统计（单位：%）统计180天内未执行过出库操作的自编批号SKU（同自编批号去重），并根据产品组的分类信息，进行占比统计，不包含研发区；只统计合格状态；需做超链接跳转，物料：原料、包材、辅料；*/\nselect * from (\nSELECT CASE WHEN bs.sku_group5 IN ( 'C类物资', 'B类物资' ) THEN\n              'B、C类物资'\n         WHEN bs.sku_group5 IN ( '包材', '原料', '辅料' ) THEN\n           '物料'\n         ELSE\n           bs.sku_group5\n       END 类型,bs.skudescr1,SUM(illi.qty) as sum_qty,ila.lotAtt06,bs.alternate_sku3,t.uomDescr\n  FROM dbo.INV_LOT_LOC_ID illi WITH (NOLOCK)\n  LEFT JOIN\n       dbo.INV_LOT_ATT ila\n    ON ila.organizationId = illi.organizationId\n   AND ila.lotNum         = illi.lotNum\n  LEFT JOIN\n       dbo.BAS_SKU bs WITH (NOLOCK)\n    ON bs.organizationId   = illi.organizationId\n   AND bs.customerId       = illi.customerId\n   AND bs.sku              = illi.sku\n  LEFT JOIN\n       dbo.BAS_LOCATION bl WITH (NOLOCK)\n    ON bl.organizationId   = illi.organizationId\n   AND bl.warehouseId      = illi.warehouseId\n   AND bl.locationId       = illi.locationId\n  LEFT JOIN\n       ( SELECT atl.organizationId, atl.warehouseId, ila1.lotAtt06\n           FROM dbo.ACT_TRANSACTION_LOG atl WITH (NOLOCK)\n           LEFT JOIN\n                dbo.INV_LOT_ATT ila1 WITH (NOLOCK)\n             ON ila1.organizationId = atl.organizationId\n            AND ila1.lotNum         = atl.toLotNum\n          WHERE atl.status          = '99'\n            AND atl.transactionType IN ( 'IN', 'SO' )\n\n\t\t\tAND atl.transactionTime > DATEADD(DAY, -180, GETDATE())\n\t\t\t) atl\n    ON atl.organizationId = ila.organizationId\n   AND atl.warehouseId    = illi.warehouseId\n   AND atl.lotAtt06       = ila.lotAtt06\n\t LEFT JOIN BAS_SKU_MULTIWAREHOUSE bsm WITH(NOLOCK)    \n      ON    \n      ila.organizationId = bsm.organizationId    \n      AND illi.warehouseId = bsm.warehouseId    \n      AND ila.customerId = bsm.customerId    \n      AND bs.sku = bsm.sku    \n      LEFT JOIN BAS_PACKAGE_DETAILS t WITH(NOLOCK)    \n      ON    \n      ila.organizationId = t.organizationId    \n      AND    \n      CASE WHEN isnull(bsm.customerId, '') = '' THEN bs.customerId ELSE    \n      bsm.customerId END = t.customerId    \n      AND    \n      CASE WHEN isnull(bsm.packId, '') = '' THEN bs.packId ELSE bsm.packId END =    \n      t.packId    \n      AND    \n      CASE WHEN isnull(bsm.reportUom, '') = '' THEN bs.reportUom ELSE    \n      bsm.reportUom END = t.packUom\n  /* AND atl.transactionTime > DATEADD(DAY, -180, '2025-04-01')*/\n WHERE bs.sku_group5 IN ( 'C类物资', 'B类物资', '包材', '原料', '辅料', 'A类物资' )\n   AND atl.organizationId IS NULL\n   AND bl.zoneid =  '02'\n\t GROUP BY CASE WHEN bs.sku_group5 IN ( 'C类物资', 'B类物资' ) THEN\n              'B、C类物资'\n         WHEN bs.sku_group5 IN ( '包材', '原料', '辅料' ) THEN\n           '物料'\n         ELSE\n           bs.sku_group5\n       END ,bs.skudescr1,ila.lotAtt06,bs.alternate_sku3,t.uomDescr\n\t) t where t.类型 is not null ${if(len(物资物料类型)=0,\"\",\"and t.类型 = '\"+物资物料类型+\"'\")}  order by right(t.lotAtt06,6) asc",
+          "params": []
+        }
+      ]
+    },
+    "库存校对": {
+      "filename": "库存校对.cpt",
+      "primary_connection": "ekp",
+      "primary_table": "",
+      "datasets": [
+        {
+          "name": "erp库存数据",
+          "connection": "ekp",
+          "table": "",
+          "sql_template": "SELECT \n    COALESCE(SUM(CASE WHEN WAREHOUSEID = '01' THEN qty ELSE 0 END), 0) AS \"研发区\",\n    COALESCE(SUM(CASE WHEN WAREHOUSEID = '02' THEN qty ELSE 0 END), 0) AS \"物资物料区\",\n    COALESCE(SUM(CASE WHEN WAREHOUSEID = '03' THEN qty ELSE 0 END), 0) AS \"原液产品区\",\n    COALESCE(SUM(CASE WHEN WAREHOUSEID = '04' THEN qty ELSE 0 END), 0) AS \"成品区\",\n    COALESCE(SUM(CASE WHEN WAREHOUSEID = '05' THEN qty ELSE 0 END), 0) AS \"不合格品区\",\n    --COALESCE(SUM(CASE WHEN WAREHOUSEID = '06' THEN qty ELSE 0 END), 0) AS \"成品退货区\",\n    --COALESCE(SUM(CASE WHEN WAREHOUSEID = '07' THEN qty ELSE 0 END), 0) AS \"代管区域\",\n    COALESCE(SUM(CASE WHEN WAREHOUSEID = '08' THEN qty ELSE 0 END), 0) AS \"DS库区\",\n    COALESCE(SUM(CASE WHEN WAREHOUSEID = '09' THEN qty ELSE 0 END), 0) AS \"FF库区\",\n    COALESCE(SUM(CASE WHEN WAREHOUSEID = '10' THEN qty ELSE 0 END), 0) AS \"EM库区\",\n    COALESCE(SUM(CASE WHEN WAREHOUSEID = '11' THEN qty ELSE 0 END), 0) AS \"QC库区\"\n   -- COALESCE(SUM(CASE WHEN WAREHOUSEID = '12' THEN qty ELSE 0 END), 0) AS \"过渡库区\"\nFROM zxncc.wmsxcl",
+          "params": []
+        },
+        {
+          "name": "wms库存数据",
+          "connection": "WMS_PROD",
+          "table": "ZXJT_WMSXCL",
+          "sql_template": "SELECT \n    COALESCE(SUM(CASE WHEN Z.zoneid = '01' THEN fmqty ELSE 0 END), 0) AS \"研发区\",\n    COALESCE(SUM(CASE WHEN Z.zoneid = '02' THEN fmqty ELSE 0 END), 0) AS \"物资物料区\",\n    COALESCE(SUM(CASE WHEN Z.zoneid = '03' THEN fmqty ELSE 0 END), 0) AS \"原液产品区\",\n    COALESCE(SUM(CASE WHEN Z.zoneid = '04' THEN fmqty when Z.zoneid in ('LA01', 'LA02', 'LA03', 'LA04', 'LA05', 'LA06', 'LA07', 'LB01', 'LB02', 'LB03', 'LB04', 'LB05', 'LB06', 'LB07', 'LC01', 'LC02', 'LC03', 'LC04', 'LC05', 'LC06', 'LC07') then fmqty  ELSE 0 END), 0) AS \"成品区\",\n    COALESCE(SUM(CASE WHEN Z.zoneid = '05' THEN fmqty ELSE 0 END), 0) AS \"不合格品区\",\n   -- COALESCE(SUM(CASE WHEN Z.zoneid = '06' THEN fmqty ELSE 0 END), 0) AS \"成品退货区\",\n  --  COALESCE(SUM(CASE WHEN Z.zoneid = '07' THEN fmqty ELSE 0 END), 0) AS \"代管区域\",\n    COALESCE(SUM(CASE WHEN Z.zoneid = '08' THEN fmqty ELSE 0 END), 0) AS \"DS库区\",\n    COALESCE(SUM(CASE WHEN Z.zoneid = '09' THEN fmqty ELSE 0 END), 0) AS \"FF库区\",\n    COALESCE(SUM(CASE WHEN Z.zoneid = '10' THEN fmqty ELSE 0 END), 0) AS \"EM库区\",\n    COALESCE(SUM(CASE WHEN Z.zoneid = '11' THEN fmqty ELSE 0 END), 0) AS \"QC库区\"\n    --COALESCE(SUM(CASE WHEN Z.zoneid = '12' THEN fmqty ELSE 0 END), 0) AS \"过渡库区\" \n    from ZXJT_WMSXCL Z",
+          "params": []
+        },
+        {
+          "name": "wms托盘库存",
+          "connection": "WMS_PROD",
+          "table": "INV_LOT_LOC_ID",
+          "sql_template": "select \nsum(Qty) as fmQty from INV_LOT_LOC_ID where sku in ('TP01','TP02','TP03')",
+          "params": []
+        },
+        {
+          "name": "wms未上架库存",
+          "connection": "WMS_PROD",
+          "table": "ZXJT_WMSXCL",
+          "sql_template": "select \nisnull(sum(fmQty),0) as fmQty from ZXJT_WMSXCL where zoneid = '12' and locationId = 'STAGE'",
+          "params": []
+        },
+        {
+          "name": "wms过渡库存",
+          "connection": "WMS_PROD",
+          "table": "ZXJT_WMSXCL",
+          "sql_template": "select \nisnull(sum(fmQty),0) as Qty from ZXJT_WMSXCL where zoneid = '12' and locationId = 'SORTATION_ZXJT'",
+          "params": []
+        },
+        {
+          "name": "erp库存总数",
+          "connection": "ekp",
+          "table": "",
+          "sql_template": "SELECT SUM(QTY) AS SUM_ERP FROM zxncc.wmsxcl",
+          "params": []
+        },
+        {
+          "name": "wms库存总数",
+          "connection": "WMS_PROD",
+          "table": "ZXJT_WMSXCL",
+          "sql_template": "select \nsum(fmQty) as fmQty from ZXJT_WMSXCL",
+          "params": []
+        }
+      ]
+    },
+    "物控部产品信息维护": {
+      "filename": "物控部产品信息维护.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "",
+      "datasets": [
+        {
+          "name": "ds1",
+          "connection": "WMS_PROD",
+          "table": "",
+          "sql_template": "select * from dbo.ZXJT_FR_LG_PRODUCT where ISVISIABLE = 1",
+          "params": []
+        }
+      ]
+    },
+    "物控部物料物资维护": {
+      "filename": "物控部物料物资维护.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "BAS_SKU",
+      "datasets": [
+        {
+          "name": "ds1",
+          "connection": "WMS_PROD",
+          "table": "BAS_SKU",
+          "sql_template": "select CASE WHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'RM' THEN '原料'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'EP' THEN '辅料'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'PM' THEN '包装材料'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'AS' THEN 'A类物资'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'MB' THEN 'B类物资'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'MC' THEN 'C类物资' \nELSE '其它' END  AS 二级分类,\nCASE WHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'RM' THEN '物料'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'EP' THEN '物料'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'PM' THEN '物料'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'AS' THEN '物资'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'MB' THEN '物资'\nWHEN SUBSTRING(ZM.MATERIAL_CODE,1,2) = 'MC' THEN '物资' \nELSE '其它' END  AS 一级分类,\nZM.*,BS.alternate_sku3,BS.skuDescr1,BS.alternate_sku5 from dbo.ZXJT_FR_LG_MATERIAL ZM LEFT JOIN BAS_SKU BS ON ZM.MATERIAL_CODE = BS.EASYCODE\nWHERE ZM.ISVISIABLE = 1 and product_id = '${产品名称}'",
+          "params": []
+        }
+      ]
+    },
+    "物料预警填报": {
+      "filename": "物料预警填报.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "DOC_ASN_DETAILS",
+      "datasets": [
+        {
+          "name": "ds2",
+          "connection": "WMS_PROD",
+          "table": "DOC_ASN_DETAILS",
+          "sql_template": "select bs.easycode,SUM(d.receivedQty) as sum_qty from DOC_ASN_DETAILS d left join BAS_SKU bs on d.sku = bs.sku where d.lineStatus = '99' and d.editTime > '${采购时间}' AND bs.easycode = '${物料代码}' group by bs.easycode",
+          "params": []
+        },
+        {
+          "name": "ds1",
+          "connection": "WMS_PROD",
+          "table": "BAS_SKU",
+          "sql_template": "select ZR.*,BS.alternate_sku3,BS.skuDescr1 from dbo.ZXJT_FR_RECEIVING ZR \nLEFT JOIN BAS_SKU BS ON ZR.MATERIAL_CODE = BS.EASYCODE\nWHERE ZR.ISVISIABLE = 1 ${if(创建人=\"admin\",\" and 1=1\",\"and creator = '\"+创建人+\"'\")}",
+          "params": []
+        },
+        {
+          "name": "ds3",
+          "connection": "WMS_PROD",
+          "table": "INV_LOT_LOC_ID",
+          "sql_template": "SELECT\nbas_sku.easycode,\n\n\n\n\nCASE WHEN SUM(a.qty /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) - SUM(a.qtyAllocated /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) - SUM(a.qtyOnHold /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) - SUM(a.qtyRpOut /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) - SUM(a.qtyMvOut /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) < 0 THEN 0 ELSE SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qty          ELSE a.qty /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) - SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qtyAllocated ELSE a.qtyAllocated /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) - SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qtyOnHold    ELSE a.qtyOnHold /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) - SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qtyRpOut     ELSE a.qtyRpOut /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) - SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qtyMvOut     ELSE a.qtyMvOut /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) END AS\nqtyAvailed\nFROM\nINV_LOT_LOC_ID a WITH(NOLOCK)\nLEFT JOIN BAS_SKU bas_sku WITH(NOLOCK)\nON\na.organizationId = bas_sku.organizationId\nAND bas_sku.customerId = a.customerId\nAND bas_sku.sku = a.sku\nLEFT JOIN BAS_CUSTOMER b WITH(NOLOCK)\nON\na.organizationId = b.organizationId\nAND a.customerId = b.customerId\nAND b.customerType = 'OW'\nLEFT JOIN BAS_SKU_MULTIWAREHOUSE bsm WITH(NOLOCK)\nON\na.organizationId = bsm.organizationId\nAND a.warehouseId = bsm.warehouseId\nAND a.customerId = bsm.customerId\nAND a.sku = bsm.sku\nLEFT JOIN BAS_PACKAGE_DETAILS t WITH(NOLOCK)\nON\nbas_sku.organizationId = t.organizationId\nAND\nCASE WHEN isnull(bsm.customerId, '') = '' THEN bas_sku.customerId ELSE\nbsm.customerId END = t.customerId\nAND\nCASE WHEN isnull(bsm.packId, '') = '' THEN bas_sku.packId ELSE bsm.packId END =\nt.packId\nAND\nCASE WHEN isnull(bsm.reportUom, '') = '' THEN bas_sku.reportUom ELSE\nbsm.reportUom END = t.packUom\nLEFT JOIN BAS_LOCATION d WITH(NOLOCK)\nON\na.organizationId = d.organizationId\nAND a.warehouseId = d.warehouseId\nAND a.locationId = d.locationId\nLEFT JOIN BAS_ZONE h WITH(NOLOCK)\nON\na.organizationId = h.organizationId\nAND a.warehouseId = h.warehouseId\nAND d.zoneId = h.zoneId\nLEFT JOIN INV_LOT_ATT ila WITH(NOLOCK)\nON\na.organizationId = ila.organizationId\nAND a.lotNum = ila.lotNum\nLEFT JOIN BSM_CODE_ML m\nON\n1 = 1\nAND a.organizationId = m.organizationId\nAND m.codeType = 'ENVIRONMENT_TYPE'\nAND m.codeId = bas_sku.environment\nWHERE\na.organizationId = 'ZXJT'\nAND\n(\na.qty > 0\nOR a.qtyRpIn > 0\nOR a.qtyMvIn > 0\n)\nAND a.warehouseId IN('ZXJT')\nand bas_sku.easycode = '${物料代码}'\nGROUP BY\na.organizationId,\na.warehouseId,\na.customerId,\na.sku,\nbas_sku.easycode,\nbas_sku.skuDescr1,\nbas_sku.skuDescr2,\nt.uomDescr,\nt.qty,\nBAS_SKU.organizationId,\nBAS_SKU.packId,\nBAS_SKU.customerId,\nbas_sku.alternate_sku4,\nbas_sku.alternate_sku5,\nbas_sku.environment,\nbas_sku.alternate_sku3,\nm.codeDescr",
+          "params": []
+        }
+      ]
+    },
+    "物料预警明细": {
+      "filename": "物料预警明细.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "DOC_ASN_DETAILS",
+      "datasets": [
+        {
+          "name": "ds2",
+          "connection": "WMS_PROD",
+          "table": "DOC_ASN_DETAILS",
+          "sql_template": "select bs.easycode,SUM(d.receivedQty) as sum_qty from DOC_ASN_DETAILS d left join BAS_SKU bs on d.sku = bs.sku where d.lineStatus = '99' and d.editTime > '${采购时间}' AND bs.easycode = '${物料代码}' group by bs.easycode",
+          "params": []
+        },
+        {
+          "name": "ds1",
+          "connection": "WMS_PROD",
+          "table": "BAS_SKU",
+          "sql_template": "select ZR.*,BS.alternate_sku3,BS.skuDescr1 from dbo.ZXJT_FR_RECEIVING ZR \nLEFT JOIN BAS_SKU BS ON ZR.MATERIAL_CODE = BS.EASYCODE\nWHERE ZR.ISVISIABLE = 1 ${if(创建人=\"admin\",\" and 1=1\",\"and creator = '\"+创建人+\"'\")}",
+          "params": []
+        },
+        {
+          "name": "ds3",
+          "connection": "WMS_PROD",
+          "table": "INV_LOT_LOC_ID",
+          "sql_template": "SELECT\nbas_sku.easycode,\n\n\n\n\nCASE WHEN SUM(a.qty /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) - SUM(a.qtyAllocated /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) - SUM(a.qtyOnHold /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) - SUM(a.qtyRpOut /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) - SUM(a.qtyMvOut /\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) < 0 THEN 0 ELSE SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qty          ELSE a.qty /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) - SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qtyAllocated ELSE a.qtyAllocated /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) - SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qtyOnHold    ELSE a.qtyOnHold /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) - SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qtyRpOut     ELSE a.qtyRpOut /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) - SUM(\nCASE WHEN isnull(t.qty, 0) = 0  THEN a.qtyMvOut     ELSE a.qtyMvOut /(\nCASE WHEN isnull(t.qty, 0) != 0 THEN t.qty          ELSE 1 END) END) END AS\nqtyAvailed\nFROM\nINV_LOT_LOC_ID a WITH(NOLOCK)\nLEFT JOIN BAS_SKU bas_sku WITH(NOLOCK)\nON\na.organizationId = bas_sku.organizationId\nAND bas_sku.customerId = a.customerId\nAND bas_sku.sku = a.sku\nLEFT JOIN BAS_CUSTOMER b WITH(NOLOCK)\nON\na.organizationId = b.organizationId\nAND a.customerId = b.customerId\nAND b.customerType = 'OW'\nLEFT JOIN BAS_SKU_MULTIWAREHOUSE bsm WITH(NOLOCK)\nON\na.organizationId = bsm.organizationId\nAND a.warehouseId = bsm.warehouseId\nAND a.customerId = bsm.customerId\nAND a.sku = bsm.sku\nLEFT JOIN BAS_PACKAGE_DETAILS t WITH(NOLOCK)\nON\nbas_sku.organizationId = t.organizationId\nAND\nCASE WHEN isnull(bsm.customerId, '') = '' THEN bas_sku.customerId ELSE\nbsm.customerId END = t.customerId\nAND\nCASE WHEN isnull(bsm.packId, '') = '' THEN bas_sku.packId ELSE bsm.packId END =\nt.packId\nAND\nCASE WHEN isnull(bsm.reportUom, '') = '' THEN bas_sku.reportUom ELSE\nbsm.reportUom END = t.packUom\nLEFT JOIN BAS_LOCATION d WITH(NOLOCK)\nON\na.organizationId = d.organizationId\nAND a.warehouseId = d.warehouseId\nAND a.locationId = d.locationId\nLEFT JOIN BAS_ZONE h WITH(NOLOCK)\nON\na.organizationId = h.organizationId\nAND a.warehouseId = h.warehouseId\nAND d.zoneId = h.zoneId\nLEFT JOIN INV_LOT_ATT ila WITH(NOLOCK)\nON\na.organizationId = ila.organizationId\nAND a.lotNum = ila.lotNum\nLEFT JOIN BSM_CODE_ML m\nON\n1 = 1\nAND a.organizationId = m.organizationId\nAND m.codeType = 'ENVIRONMENT_TYPE'\nAND m.codeId = bas_sku.environment\nWHERE\na.organizationId = 'ZXJT'\nAND\n(\na.qty > 0\nOR a.qtyRpIn > 0\nOR a.qtyMvIn > 0\n)\nAND a.warehouseId IN('ZXJT')\nand bas_sku.easycode = '${物料代码}'\nGROUP BY\na.organizationId,\na.warehouseId,\na.customerId,\na.sku,\nbas_sku.easycode,\nbas_sku.skuDescr1,\nbas_sku.skuDescr2,\nt.uomDescr,\nt.qty,\nBAS_SKU.organizationId,\nBAS_SKU.packId,\nBAS_SKU.customerId,\nbas_sku.alternate_sku4,\nbas_sku.alternate_sku5,\nbas_sku.environment,\nbas_sku.alternate_sku3,\nm.codeDescr",
+          "params": []
+        }
+      ]
+    },
+    "近效期数据": {
+      "filename": "近效期数据.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "BAS_SKU_MULTIWAREHOUSE",
+      "datasets": [
+        {
+          "name": "近效期数据",
+          "connection": "WMS_PROD",
+          "table": "BAS_SKU_MULTIWAREHOUSE",
+          "sql_template": "/*仓库近效期物料物资数据占比统计 根据左边表1的统计总数，按产品档案SKU类型进行占比划分*/\n SELECT CASE WHEN BS.sku_group5 IN ( 'C类物资', 'B类物资' ) THEN\n                                          'B、C类物资'\n                                     WHEN BS.sku_group5 IN ( '包材', '原料', '辅料' ) THEN\n                                       '物料'\n                                     ELSE\n                                       BS.sku_group5\n                                   END AS 类型, isnull(ILA.lotAtt02, ILA.lotatt07) AS 近效期,ila.lotAtt06,bs.alternate_sku3,bs.skuDescr1,t.uomDescr,sum(illi.qty) as sum_qty\n           FROM dbo.INV_LOT_LOC_ID ILLI WITH (NOLOCK)\n           LEFT JOIN\n                dbo.BAS_LOCATION BL WITH (NOLOCK)\n             ON BL.organizationId  = ILLI.organizationId\n            AND BL.warehouseId     = ILLI.warehouseId\n            AND BL.locationId      = ILLI.locationId\n           LEFT JOIN\n                dbo.BAS_SKU BS WITH (NOLOCK)\n             ON BS.organizationId  = ILLI.organizationId\n            AND BS.customerId      = ILLI.customerId\n            AND BS.sku             = ILLI.sku\n\t\t\t\t\t\t\n           LEFT JOIN\n                dbo.INV_LOT_ATT ILA WITH (NOLOCK)\n             ON ILA.organizationId = ILLI.organizationId\n            AND ILA.lotNum         = ILLI.lotNum\n\t\t\t\t\t\tLEFT JOIN BAS_SKU_MULTIWAREHOUSE bsm WITH(NOLOCK)    \n      ON    \n      ila.organizationId = bsm.organizationId    \n      AND illi.warehouseId = bsm.warehouseId    \n      AND ila.customerId = bsm.customerId    \n      AND bs.sku = bsm.sku    \n      LEFT JOIN BAS_PACKAGE_DETAILS t WITH(NOLOCK)    \n      ON    \n      ila.organizationId = t.organizationId    \n      AND    \n      CASE WHEN isnull(bsm.customerId, '') = '' THEN bs.customerId ELSE    \n      bsm.customerId END = t.customerId    \n      AND    \n      CASE WHEN isnull(bsm.packId, '') = '' THEN bs.packId ELSE bsm.packId END =    \n      t.packId    \n      AND    \n      CASE WHEN isnull(bsm.reportUom, '') = '' THEN bs.reportUom ELSE    \n      bsm.reportUom END = t.packUom\n          WHERE BL.zoneId                              = '02'\n               AND ILLI.QTY > 0\n                    \n            AND DATEDIFF(DAY,   GETDATE(), ISNULL(ILA.lotAtt02, ILA.lotAtt07)) <= 90\n\n            AND BS.sku_group5 IN ( 'C类物资', 'B类物资', '包材', '原料', '辅料', 'A类物资' )\n\t\t\t\t\t\t\n         group by CASE WHEN BS.sku_group5 IN ( 'C类物资', 'B类物资' ) THEN\n                                          'B、C类物资'\n                                     WHEN BS.sku_group5 IN ( '包材', '原料', '辅料' ) THEN\n                                       '物料'\n                                     ELSE\n                                       BS.sku_group5\n                                   END , isnull(ILA.lotAtt02, ILA.lotatt07) ,ila.lotAtt06,bs.alternate_sku3,bs.skuDescr1,t.uomDescr",
+          "params": []
+        }
+      ]
+    },
+    "验收记录异常数据": {
+      "filename": "验收记录异常数据.cpt",
+      "primary_connection": "WMS_PROD",
+      "primary_table": "",
+      "datasets": [
+        {
+          "name": "验收记录异常数据",
+          "connection": "WMS_PROD",
+          "table": "",
+          "sql_template": "select * from (select CONVERT(varchar(10), h.asnCreationTime, 120) AS 订单时间, \n                h.asnNo AS ASN单号, bcm.codeDescr AS 单据类型, \n\t\t\t\t\t\t\t\tbz.zoneDescr AS 库区, b.skuDescr1 AS 物料名称, b.easyCode AS 物料代码, \n\t\t\t\t\t\t\t\t d.lotAtt04 AS 来厂批号生产批号, d.lotAtt06 AS 自编批号, \n                bcm1.codeDescr AS 质量状态,CONVERT(decimal(18, 3), d.receivedQty) AS 数量, bu.userName AS 库管员, \n\t\t\t\t\t\t\t\tbcm7.codeDescr AS 接收人,bcm8.codeDescr AS 复核人, MAX(CONVERT(VARCHAR(4000), d.noteText)) AS 备注\n\n\nfrom   dbo.DOC_ASN_HEADER AS h LEFT OUTER JOIN\n                dbo.DOC_ASN_DETAILS AS d ON d.organizationId = h.organizationId AND d.customerId = h.customerId AND \n                d.warehouseId = h.warehouseId AND d.asnNo = h.asnNo LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm ON bcm.organizationId = h.organizationId AND h.asnType = bcm.codeId AND \n                bcm.codeType = 'ASN_TYP' AND bcm.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BAS_SKU AS b ON b.organizationId = d.organizationId AND b.sku = d.sku AND \n                b.customerId = d.customerId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm1 ON bcm1.organizationId = d.organizationId AND d.lotAtt05 = bcm1.codeId AND \n                bcm1.codeType = 'LOT_QISTS' AND bcm1.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_USER AS bu ON bu.organizationId = h.organizationId AND d.operator = bu.userId LEFT OUTER JOIN\n                dbo.BSM_USER AS bu1 ON bu1.organizationId = h.organizationId AND h.addWho = bu1.userId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm2 ON bcm2.organizationId = b.organizationId AND b.sku_group5 = bcm2.codeId AND \n                bcm2.codeType = 'SKU_GRP_5' AND bcm2.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm3 ON bcm3.organizationId = b.organizationId AND b.sku_group4 = bcm3.codeId AND \n                bcm3.codeType = 'SKU_GRP_4' AND bcm3.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm4 ON bcm4.organizationId = h.organizationId AND h.asnReference5 = bcm4.codeId AND \n                bcm4.codeType = 'DP_TYPE' AND bcm4.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm7 ON bcm7.organizationId = h.organizationId AND d.note11 = bcm7.codeId AND \n                bcm7.codeType = 'NOTE_2' AND bcm7.languageId = 'zh_CN'  LEFT OUTER JOIN\n\t\t\t\t\t\t\t\tdbo.BSM_CODE_ML AS bcm8 ON bcm8.organizationId = h.organizationId AND d.note12 = bcm8.codeId AND \n                bcm8.codeType = 'NOTE_2' AND bcm8.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.TSK_TASKLISTS AS t ON t.organizationId = d.organizationId AND t.warehouseId = d.warehouseId AND \n                t.docNo = d.asnNo AND t.docLineNo = d.asnLineNo LEFT OUTER JOIN\n                dbo.BAS_LOCATION AS bl ON bl.organizationId = t.organizationId AND bl.warehouseId = t.warehouseId AND \n                bl.locationId = t.planToLocation LEFT OUTER JOIN\n                dbo.BAS_ZONE AS bz ON bz.organizationId = bl.organizationId AND bz.warehouseId = bl.warehouseId AND \n                bl.zoneId = bz.zoneId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm5 ON bcm5.organizationId = h.organizationId AND h.issuePartyAddress3 = bcm5.codeId AND\n                 bcm5.codeType = 'ZXJT_XM' AND bcm5.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BAS_PACKAGE_DETAILS AS bp ON bp.organizationId = d.organizationId AND d.packId = bp.packId AND \n                bp.qty = '1' AND bp.packUom = 'EA'  where h.asnStatus = '99' and bcm.codeDescr = '物资/物料采购入库' and b.easyCode like 'MB%' and (bcm7.codeDescr not IN('彭江华','卓腾祥','代远玲','林艳','董方圆') or bcm8.codeDescr not in ('安钊','董双灿','王庆','颜小渝','于士鹏','张瑜婵','周杰','左立成') )\n\t\t\t\t\t\t\t\tand CONVERT(varchar(4), h.asnCreationTime, 120) >= 2024 \n\t\t\t\t\t\t\t\tGROUP BY h.warehouseId, h.customerId, h.asnCreationTime, h.asnNo, bcm.codeDescr, bcm5.codeDescr, h.asnReference2, \n                bz.zoneDescr, t.planToLocation, b.skuDescr1, b.easyCode, b.alternate_sku3, b.alternate_sku4, b.alternate_sku5, \n                h.supplierName, d.lotAtt01, d.lotAtt02, d.lotAtt07, d.lotAtt04, d.lotAtt06, bcm1.codeDescr, bp.uomDescr, bcm4.codeDescr, \n                d.receivedQty, bcm4.codeDescr, bu1.userName, bu.userName, h.asnReference1, h.asnReference3, bcm2.codeDescr, \n                bcm3.codeDescr,\tbcm7.codeDescr,\tbcm8.codeDescr\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\tUNION ALL\nselect CONVERT(varchar(10), h.asnCreationTime, 120) AS 订单时间, \n                h.asnNo AS ASN单号, bcm.codeDescr AS 单据类型, \n\t\t\t\t\t\t\t\tbz.zoneDescr AS 库区, b.skuDescr1 AS 物料名称, b.easyCode AS 物料代码, \n\t\t\t\t\t\t\t\t d.lotAtt04 AS 来厂批号生产批号, d.lotAtt06 AS 自编批号, \n                bcm1.codeDescr AS 质量状态,CONVERT(decimal(18, 3), d.receivedQty) AS 数量, bu.userName AS 库管员, \n\t\t\t\t\t\t\t\tbcm7.codeDescr AS 接收人,bcm8.codeDescr AS 复核人, MAX(CONVERT(VARCHAR(4000), d.noteText)) AS 备注\n\n\nfrom   dbo.DOC_ASN_HEADER AS h LEFT OUTER JOIN\n                dbo.DOC_ASN_DETAILS AS d ON d.organizationId = h.organizationId AND d.customerId = h.customerId AND \n                d.warehouseId = h.warehouseId AND d.asnNo = h.asnNo LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm ON bcm.organizationId = h.organizationId AND h.asnType = bcm.codeId AND \n                bcm.codeType = 'ASN_TYP' AND bcm.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BAS_SKU AS b ON b.organizationId = d.organizationId AND b.sku = d.sku AND \n                b.customerId = d.customerId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm1 ON bcm1.organizationId = d.organizationId AND d.lotAtt05 = bcm1.codeId AND \n                bcm1.codeType = 'LOT_QISTS' AND bcm1.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_USER AS bu ON bu.organizationId = h.organizationId AND d.operator = bu.userId LEFT OUTER JOIN\n                dbo.BSM_USER AS bu1 ON bu1.organizationId = h.organizationId AND h.addWho = bu1.userId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm2 ON bcm2.organizationId = b.organizationId AND b.sku_group5 = bcm2.codeId AND \n                bcm2.codeType = 'SKU_GRP_5' AND bcm2.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm3 ON bcm3.organizationId = b.organizationId AND b.sku_group4 = bcm3.codeId AND \n                bcm3.codeType = 'SKU_GRP_4' AND bcm3.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm4 ON bcm4.organizationId = h.organizationId AND h.asnReference5 = bcm4.codeId AND \n                bcm4.codeType = 'DP_TYPE' AND bcm4.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm7 ON bcm7.organizationId = h.organizationId AND d.note11 = bcm7.codeId AND \n                bcm7.codeType = 'NOTE_2' AND bcm7.languageId = 'zh_CN'  LEFT OUTER JOIN\n\t\t\t\t\t\t\t\tdbo.BSM_CODE_ML AS bcm8 ON bcm8.organizationId = h.organizationId AND d.note12 = bcm8.codeId AND \n                bcm8.codeType = 'NOTE_2' AND bcm8.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.TSK_TASKLISTS AS t ON t.organizationId = d.organizationId AND t.warehouseId = d.warehouseId AND \n                t.docNo = d.asnNo AND t.docLineNo = d.asnLineNo LEFT OUTER JOIN\n                dbo.BAS_LOCATION AS bl ON bl.organizationId = t.organizationId AND bl.warehouseId = t.warehouseId AND \n                bl.locationId = t.planToLocation LEFT OUTER JOIN\n                dbo.BAS_ZONE AS bz ON bz.organizationId = bl.organizationId AND bz.warehouseId = bl.warehouseId AND \n                bl.zoneId = bz.zoneId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm5 ON bcm5.organizationId = h.organizationId AND h.issuePartyAddress3 = bcm5.codeId AND\n                 bcm5.codeType = 'ZXJT_XM' AND bcm5.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BAS_PACKAGE_DETAILS AS bp ON bp.organizationId = d.organizationId AND d.packId = bp.packId AND \n                bp.qty = '1' AND bp.packUom = 'EA'  where h.asnStatus = '99' and bcm.codeDescr = '物资/物料采购入库' and \n\t\t\t\t\t\t\t\t(b.easyCode like 'AS%'  OR \n\t\t\t\t\t\t\t\tb.easyCode like 'RM%'  OR \n\t\t\t\t\t\t\t\tb.easyCode like 'EP%'  OR \n\t\t\t\t\t\t\t\tb.easyCode like 'PM%'  )\n\t\t\t\t\t\t\t\tand bcm7.codeDescr = bcm8.codeDescr \n\t\t\t\t\t\t\t\tand CONVERT(varchar(4), h.asnCreationTime, 120) >= 2024\n\t\t\t\t\t\t\t\tGROUP BY h.warehouseId, h.customerId, h.asnCreationTime, h.asnNo, bcm.codeDescr, bcm5.codeDescr, h.asnReference2, \n                bz.zoneDescr, t.planToLocation, b.skuDescr1, b.easyCode, b.alternate_sku3, b.alternate_sku4, b.alternate_sku5, \n                h.supplierName, d.lotAtt01, d.lotAtt02, d.lotAtt07, d.lotAtt04, d.lotAtt06, bcm1.codeDescr, bp.uomDescr, bcm4.codeDescr, \n                d.receivedQty, bcm4.codeDescr, bu1.userName, bu.userName, h.asnReference1, h.asnReference3, bcm2.codeDescr, \n                bcm3.codeDescr,\tbcm7.codeDescr,\tbcm8.codeDescr) t where 1 = 1 ${if(len(物料代码)>0,\"AND 物料代码 like '\"+物料代码+\"%'\",\"\")}",
+          "params": []
+        },
+        {
+          "name": "验收记录非异常数据",
+          "connection": "WMS_PROD",
+          "table": "",
+          "sql_template": "select * from (select CONVERT(varchar(10), h.asnCreationTime, 120) AS 订单时间, \n                h.asnNo AS ASN单号, bcm.codeDescr AS 单据类型, \n\t\t\t\t\t\t\t\tbz.zoneDescr AS 库区, b.skuDescr1 AS 物料名称, b.easyCode AS 物料代码, \n\t\t\t\t\t\t\t\t d.lotAtt04 AS 来厂批号生产批号, d.lotAtt06 AS 自编批号, \n                bcm1.codeDescr AS 质量状态,CONVERT(decimal(18, 3), d.receivedQty) AS 数量, bu.userName AS 库管员, \n\t\t\t\t\t\t\t\tbcm7.codeDescr AS 接收人,bcm8.codeDescr AS 复核人,MAX(CONVERT(VARCHAR(4000), d.noteText)) AS 备注\n\n\nfrom   dbo.DOC_ASN_HEADER AS h LEFT OUTER JOIN\n                dbo.DOC_ASN_DETAILS AS d ON d.organizationId = h.organizationId AND d.customerId = h.customerId AND \n                d.warehouseId = h.warehouseId AND d.asnNo = h.asnNo LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm ON bcm.organizationId = h.organizationId AND h.asnType = bcm.codeId AND \n                bcm.codeType = 'ASN_TYP' AND bcm.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BAS_SKU AS b ON b.organizationId = d.organizationId AND b.sku = d.sku AND \n                b.customerId = d.customerId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm1 ON bcm1.organizationId = d.organizationId AND d.lotAtt05 = bcm1.codeId AND \n                bcm1.codeType = 'LOT_QISTS' AND bcm1.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_USER AS bu ON bu.organizationId = h.organizationId AND d.operator = bu.userId LEFT OUTER JOIN\n                dbo.BSM_USER AS bu1 ON bu1.organizationId = h.organizationId AND h.addWho = bu1.userId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm2 ON bcm2.organizationId = b.organizationId AND b.sku_group5 = bcm2.codeId AND \n                bcm2.codeType = 'SKU_GRP_5' AND bcm2.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm3 ON bcm3.organizationId = b.organizationId AND b.sku_group4 = bcm3.codeId AND \n                bcm3.codeType = 'SKU_GRP_4' AND bcm3.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm4 ON bcm4.organizationId = h.organizationId AND h.asnReference5 = bcm4.codeId AND \n                bcm4.codeType = 'DP_TYPE' AND bcm4.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm7 ON bcm7.organizationId = h.organizationId AND d.note11 = bcm7.codeId AND \n                bcm7.codeType = 'NOTE_2' AND bcm7.languageId = 'zh_CN'  LEFT OUTER JOIN\n\t\t\t\t\t\t\t\tdbo.BSM_CODE_ML AS bcm8 ON bcm8.organizationId = h.organizationId AND d.note12 = bcm8.codeId AND \n                bcm8.codeType = 'NOTE_2' AND bcm8.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.TSK_TASKLISTS AS t ON t.organizationId = d.organizationId AND t.warehouseId = d.warehouseId AND \n                t.docNo = d.asnNo AND t.docLineNo = d.asnLineNo LEFT OUTER JOIN\n                dbo.BAS_LOCATION AS bl ON bl.organizationId = t.organizationId AND bl.warehouseId = t.warehouseId AND \n                bl.locationId = t.planToLocation LEFT OUTER JOIN\n                dbo.BAS_ZONE AS bz ON bz.organizationId = bl.organizationId AND bz.warehouseId = bl.warehouseId AND \n                bl.zoneId = bz.zoneId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm5 ON bcm5.organizationId = h.organizationId AND h.issuePartyAddress3 = bcm5.codeId AND\n                 bcm5.codeType = 'ZXJT_XM' AND bcm5.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BAS_PACKAGE_DETAILS AS bp ON bp.organizationId = d.organizationId AND d.packId = bp.packId AND \n                bp.qty = '1' AND bp.packUom = 'EA'  where h.asnStatus = '99' and bcm.codeDescr = '物资/物料采购入库' and b.easyCode like 'MB%' \n     ${if(len(开始时间)==0,if(len(结束时间)==0,\"\",\"and h.asnCreationTime <= '\"+结束时间+\"'\" ),if(len(结束时间)==0,\"and h.asnCreationTime >= '\"+开始时间+\"'\",\"and h.asnCreationTime between '\"+开始时间+ \"' and '\"+结束时间+\"'\"))}\n\t\t\t\t\t\t\t\t--and(bcm7.codeDescr IN('彭江华','卓腾祥','代远玲','林艳','董方圆') \n-- AND bcm8.codeDescr IN ('安钊','董双灿','王庆','颜小渝','于士鹏','张瑜婵','周杰','左立成'))\n\t\t\t\t\t\t\t\tand CONVERT(varchar(4), h.asnCreationTime, 120) >= 2024 \n\t\t\t\t\t\t\t\tGROUP BY h.warehouseId, h.customerId, h.asnCreationTime, h.asnNo, bcm.codeDescr, bcm5.codeDescr, h.asnReference2, \n                bz.zoneDescr, t.planToLocation, b.skuDescr1, b.easyCode, b.alternate_sku3, b.alternate_sku4, b.alternate_sku5, \n                h.supplierName, d.lotAtt01, d.lotAtt02, d.lotAtt07, d.lotAtt04, d.lotAtt06, bcm1.codeDescr, bp.uomDescr, bcm4.codeDescr, \n                d.receivedQty, bcm4.codeDescr, bu1.userName, bu.userName, h.asnReference1, h.asnReference3, bcm2.codeDescr, \n                bcm3.codeDescr,\tbcm7.codeDescr,\tbcm8.codeDescr\n\t\t\t\t\t\t\t\tUNION ALL\nselect CONVERT(varchar(10), h.asnCreationTime, 120) AS 订单时间, \n                h.asnNo AS ASN单号, bcm.codeDescr AS 单据类型, \n\t\t\t\t\t\t\t\tbz.zoneDescr AS 库区, b.skuDescr1 AS 物料名称, b.easyCode AS 物料代码, \n\t\t\t\t\t\t\t\t d.lotAtt04 AS 来厂批号生产批号, d.lotAtt06 AS 自编批号, \n                bcm1.codeDescr AS 质量状态,CONVERT(decimal(18, 3), d.receivedQty) AS 数量, bu.userName AS 库管员, \n\t\t\t\t\t\t\t\tbcm7.codeDescr AS 接收人,bcm8.codeDescr AS 复核人,MAX(CONVERT(VARCHAR(4000), d.noteText)) AS 备注\n\n\nfrom   dbo.DOC_ASN_HEADER AS h LEFT OUTER JOIN\n                dbo.DOC_ASN_DETAILS AS d ON d.organizationId = h.organizationId AND d.customerId = h.customerId AND \n                d.warehouseId = h.warehouseId AND d.asnNo = h.asnNo LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm ON bcm.organizationId = h.organizationId AND h.asnType = bcm.codeId AND \n                bcm.codeType = 'ASN_TYP' AND bcm.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BAS_SKU AS b ON b.organizationId = d.organizationId AND b.sku = d.sku AND \n                b.customerId = d.customerId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm1 ON bcm1.organizationId = d.organizationId AND d.lotAtt05 = bcm1.codeId AND \n                bcm1.codeType = 'LOT_QISTS' AND bcm1.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_USER AS bu ON bu.organizationId = h.organizationId AND d.operator = bu.userId LEFT OUTER JOIN\n                dbo.BSM_USER AS bu1 ON bu1.organizationId = h.organizationId AND h.addWho = bu1.userId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm2 ON bcm2.organizationId = b.organizationId AND b.sku_group5 = bcm2.codeId AND \n                bcm2.codeType = 'SKU_GRP_5' AND bcm2.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm3 ON bcm3.organizationId = b.organizationId AND b.sku_group4 = bcm3.codeId AND \n                bcm3.codeType = 'SKU_GRP_4' AND bcm3.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm4 ON bcm4.organizationId = h.organizationId AND h.asnReference5 = bcm4.codeId AND \n                bcm4.codeType = 'DP_TYPE' AND bcm4.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm7 ON bcm7.organizationId = h.organizationId AND d.note11 = bcm7.codeId AND \n                bcm7.codeType = 'NOTE_2' AND bcm7.languageId = 'zh_CN'  LEFT OUTER JOIN\n\t\t\t\t\t\t\t\tdbo.BSM_CODE_ML AS bcm8 ON bcm8.organizationId = h.organizationId AND d.note12 = bcm8.codeId AND \n                bcm8.codeType = 'NOTE_2' AND bcm8.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.TSK_TASKLISTS AS t ON t.organizationId = d.organizationId AND t.warehouseId = d.warehouseId AND \n                t.docNo = d.asnNo AND t.docLineNo = d.asnLineNo LEFT OUTER JOIN\n                dbo.BAS_LOCATION AS bl ON bl.organizationId = t.organizationId AND bl.warehouseId = t.warehouseId AND \n                bl.locationId = t.planToLocation LEFT OUTER JOIN\n                dbo.BAS_ZONE AS bz ON bz.organizationId = bl.organizationId AND bz.warehouseId = bl.warehouseId AND \n                bl.zoneId = bz.zoneId LEFT OUTER JOIN\n                dbo.BSM_CODE_ML AS bcm5 ON bcm5.organizationId = h.organizationId AND h.issuePartyAddress3 = bcm5.codeId AND\n                 bcm5.codeType = 'ZXJT_XM' AND bcm5.languageId = 'zh_CN' LEFT OUTER JOIN\n                dbo.BAS_PACKAGE_DETAILS AS bp ON bp.organizationId = d.organizationId AND d.packId = bp.packId AND \n                bp.qty = '1' AND bp.packUom = 'EA'  where h.asnStatus = '99' and bcm.codeDescr = '物资/物料采购入库' and \n\t\t\t\t\t\t\t\t(b.easyCode like 'AS%'  OR \n\t\t\t\t\t\t\t\tb.easyCode like 'RM%'  OR \n\t\t\t\t\t\t\t\tb.easyCode like 'EP%'  OR \n\t\t\t\t\t\t\t\tb.easyCode like 'PM%'  )\n\t\t\t\t\t\t\t\t--and bcm7.codeDescr <> bcm8.codeDescr \n\t\t\t\t\t\t\t\tand CONVERT(varchar(4), h.asnCreationTime, 120) >= 2024    ${if(len(开始时间)==0,if(len(结束时间)==0,\"\",\"and h.asnCreationTime <= '\"+结束时间+\"'\" ),if(len(结束时间)==0,\"and h.asnCreationTime >= '\"+开始时间+\"'\",\"and h.asnCreationTime between '\"+开始时间+ \"' and '\"+结束时间+\"'\"))}\n\t\t\t\t\t\t\t\tGROUP BY h.warehouseId, h.customerId, h.asnCreationTime, h.asnNo, bcm.codeDescr, bcm5.codeDescr, h.asnReference2, \n                bz.zoneDescr, t.planToLocation, b.skuDescr1, b.easyCode, b.alternate_sku3, b.alternate_sku4, b.alternate_sku5, \n                h.supplierName, d.lotAtt01, d.lotAtt02, d.lotAtt07, d.lotAtt04, d.lotAtt06, bcm1.codeDescr, bp.uomDescr, bcm4.codeDescr, \n                d.receivedQty, bcm4.codeDescr, bu1.userName, bu.userName, h.asnReference1, h.asnReference3, bcm2.codeDescr, \n                bcm3.codeDescr,\tbcm7.codeDescr,\tbcm8.codeDescr) t where 1 = 1 ${if(len(物料代码)>0,\"AND 物料代码 like '\"+物料代码+\"%'\",\"\")}",
+          "params": []
+        }
+      ]
+    }
+  }
+}

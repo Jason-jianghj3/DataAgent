@@ -1,0 +1,78 @@
+# 环境配置（含数据库密码等敏感信息）
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境
+venv/
+.venv/
+env/
+python-1/
+
+# 日志
+logs/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 帆软插件包（运行时不需要）
+*.tar
+*.zip
+
+# 归档目录
+_archive/
+
+# 提取的prompt（弃用工具的输出）
+extracted_prompts_*.json
+
+# 加密源码目录
+_finechatbi_src/
+_fineai_src/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 缓存数据
+data/semantic_cache.json
+
+# 测试输出
+test_llm_results.json
+test_result.txt
+测试失败的sql.txt
+
+# Office临时文件
+~$*.xlsx
+~$*.docx
+
+# 非代码文件
+工作簿1.xlsx
+需求.docx
+帆软AIChat.pdf
+技术文档.md
+
+# 部分报表目录（非核心代码）
+部分报表/
+
+# 插件源码目录
+_plugin_src/
+
+# WorkBuddy配置
+.workbuddy/
+
+# 数据文件（含业务数据，不上传）
+FMCS数据点.xlsx
+
+# 本地启动脚本
+start.bat

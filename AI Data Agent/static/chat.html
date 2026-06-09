@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>NL2API 智能数据助手</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 头部 */
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .chat-header .logo {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .chat-header .header-info h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .chat-header .header-info p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .chat-header .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #52c41a;
+            border-radius: 50%;
+            margin-left: auto;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* 消息区域 */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+        
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+        }
+        
+        .message-content {
+            background: #fff;
+            padding: 14px 18px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.assistant .message-content {
+            border-bottom-left-radius: 4px;
+        }
+        
+        /* NL2API 链路展示 */
+        .nl2api-chain {
+            margin-top: 12px;
+            border-top: 1px solid #e8e8e8;
+            padding-top: 12px;
+        }
+        
+        .chain-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        
+        .chain-step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .chain-step.layer-1 .chain-step-icon { background: #1890ff; }
+        .chain-step.layer-2 .chain-step-icon { background: #722ed1; }
+        .chain-step.layer-3 .chain-step-icon { background: #fa8c16; }
+        .chain-step.layer-4 .chain-step-icon { background: #52c41a; }
+        .chain-step.layer-5 .chain-step-icon { background: #eb2f96; }
+        
+        .chain-step-content {
+            flex: 1;
+        }
+        
+        .chain-step-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .chain-step-detail {
+            color: #666;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .chain-step-detail code {
+            background: #e6f7ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Cascadia Code', Consolas, monospace;
+            font-size: 11px;
+            color: #1890ff;
+        }
+        
+        /* 数据结果卡片 */
+        .result-card {
+            margin-top: 12px;
+            background: linear-gradient(135deg, #e6f7ff, #f0f5ff);
+            border: 1px solid #91d5ff;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .result-card-header {
+            background: linear-gradient(135deg, #1890ff, #096dd9);
+            color: #fff;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .result-card-body {
+            padding: 14px;
+        }
+        
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .stat-item {
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1890ff;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+        }
+        
+        /* AI 总结 */
+        .ai-summary {
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #52c41a;
+            margin-bottom: 12px;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #333;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+        
+        .agent-result {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+        
+        /* 图表容器 */
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            background: #fff;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        /* 输入区域 */
+        .chat-input-area {
+            padding: 20px 24px;
+            background: #fff;
+            border-top: 1px solid #e8e8e8;
+        }
+        
+        .quick-questions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-question-btn {
+            padding: 6px 14px;
+            border: 1px solid #d9d9d9;
+            border-radius: 16px;
+            background: #fff;
+            color: #555;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-question-btn:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+            background: #e6f7ff;
+        }
+        
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .input-field {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 10px 16px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        .input-field:focus {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 3px rgba(24,144,255,0.1);
+        }
+        
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .send-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 加载动画 */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+        
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #ccc;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        
+        /* 错误提示 */
+        .error-message {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        
+        /* 流式输出文本 */
+        .streaming-text {
+            min-height: 20px;
+            line-height: 1.6;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .streaming-text::after {
+            content: '▊';
+            animation: blink 0.8s infinite;
+            color: #1890ff;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* Agent步骤样式 */
+        .agent-step {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .agent-thinking {
+            background: #f0f5ff;
+            border-left: 3px solid #1890ff;
+            color: #666;
+        }
+        .agent-sql {
+            background: #fff7e6;
+            border-left: 3px solid #fa8c16;
+        }
+        .agent-sql pre {
+            background: #1e1e2e !important;
+            color: #cdd6f4 !important;
+            padding: 12px !important;
+            border-radius: 8px !important;
+            font-size: 12px !important;
+            line-height: 1.5 !important;
+            overflow-x: auto;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 6px 0 0 0 !important;
+            font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace !important;
+        }
+        .agent-sql .sql-keyword {
+            color: #89b4fa;
+            font-weight: 600;
+        }
+        .agent-sql .sql-function {
+            color: #a6e3a1;
+        }
+        .agent-sql .sql-string {
+            color: #f9e2af;
+        }
+        .agent-sql .sql-number {
+            color: #fab387;
+        }
+        .agent-sql .sql-comment {
+            color: #6c7086;
+            font-style: italic;
+        }
+        .agent-sql .sql-comma {
+            color: #f38ba8;
+        }
+        .agent-data {
+            background: #f6ffed;
+            border-left: 3px solid #52c41a;
+        }
+        .agent-data table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            table-layout: fixed;
+        }
+        .agent-data th {
+            border: 1px solid #ddd;
+            padding: 4px 6px;
+            background: #f0f0f0;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100px;
+        }
+        .agent-data td {
+            border: 1px solid #ddd;
+            padding: 4px 6px;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .agent-data td:hover {
+            white-space: normal;
+            word-break: break-all;
+            overflow: visible;
+            background: #fffbe6;
+            cursor: pointer;
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+        
+        .empty-state h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .empty-state p {
+            font-size: 14px;
+            max-width: 400px;
+        }
+        
+        @media (max-width: 600px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+            
+            .result-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <!-- 头部 -->
+    <div class="chat-header">
+        <div class="logo">🤖</div>
+        <div class="header-info">
+            <h1>NL2API 智能数据助手</h1>
+            <p>自然语言 → API调用 → 数据洞察 | v1.0</p>
+        </div>
+        <div class="status-dot" title="系统运行中"></div>
+    </div>
+
+    <!-- 消息区域 -->
+    <div class="chat-messages" id="chatMessages">
+        <div class="empty-state" id="emptyState">
+            <div class="icon">💬</div>
+            <h2>欢迎使用 NL2API 智能数据助手</h2>
+            <p>我是您的帆软报表数据智能助手，可以帮您：<br><br>
+               • 用自然语言查询任意报表数据<br>
+               • 自动识别您的查询意图<br>
+               • 智能选择最佳API并执行<br>
+               • 提供AI分析和数据可视化<br><br>
+               请在下方输入您的问题开始体验！
+            </p>
+        </div>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="chat-input-area">
+        <div class="quick-questions">
+            <button class="quick-question-btn" onclick="askQuickQuestion('CI部门完成工单数量最多的员工')">CI部门工单最多的员工</button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('各部门工单处理情况')">各部门工单情况</button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('OM部门本月工单统计')">OM部门工单统计</button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('哪些物料即将过期')">近效期物料预警</button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('A1S115纯化间温度')">纯化间温度</button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('A1S126细胞培养间湿度')">培养间湿度</button>
+            <button class="quick-question-btn" onclick="askQuickQuestion('A1S115纯化间压差')">纯化间压差</button>
+        </div>
+        <div class="input-wrapper">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="font-size:12px;color:#1890ff;background:#e6f7ff;padding:4px 12px;border-radius:12px;border:1px solid #91d5ff;">🤖 Agent深度推理模式</span>
+            </div>
+            <textarea 
+                class="input-field" 
+                id="userInput" 
+                placeholder="请输入您的问题，例如：CI部门完成工单数量最多的员工是谁？"
+                rows="1"
+                onkeydown="handleKeyDown(event)"
+                oninput="autoResize(this)"
+            ></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                ➤
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== 全局变量 ====================
+const API_BASE = '';
+let chartInstances = {};  // 存储多个图表实例
+let currentSessionId = ''; // 当前对话会话ID
+let useAgentMode = true;
+
+// ==================== 初始化 ====================
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('userInput').focus();
+});
+
+function toggleAgentMode() {
+    useAgentMode = !useAgentMode;
+    const btn = document.getElementById('modeToggleBtn');
+    const hint = document.getElementById('modeHint');
+    if (useAgentMode) {
+        btn.textContent = '🤖 Agent模式：开';
+        btn.style.background = '#e6f7ff';
+        btn.style.borderColor = '#1890ff';
+        btn.style.color = '#1890ff';
+        hint.textContent = '当前：Agent深度推理模式（支持多步查询）';
+    } else {
+        btn.textContent = '🤖 Agent模式：关';
+        btn.style.background = '#fff';
+        btn.style.borderColor = '#d9d9d9';
+        btn.style.color = '#666';
+        hint.textContent = '当前：快速查询模式';
+    }
+}
+
+// ==================== 核心函数 ====================
+
+/**
+ * 发送消息（支持NL2API + Agent模式 + 对话记忆）
+ */
+async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const query = input.value.trim();
+    
+    if (!query) return;
+    
+    input.value = '';
+    input.style.height = 'auto';
+    
+    document.getElementById('emptyState').style.display = 'none';
+    
+    addMessage('user', query);
+    
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    
+    const assistantMsgId = addAssistantMessage('');
+    showTypingIndicator(assistantMsgId);
+    
+    try {
+        // FMCS设备查询意图识别
+        const fmcsIntent = detectFMCSIntent(query);
+        if (fmcsIntent) {
+            await handleFMCSQuery(fmcsIntent, assistantMsgId);
+            hideTypingIndicator(assistantMsgId);
+            return;
+        }
+
+        if (useAgentMode) {
+            await callAgentStream(query, assistantMsgId);
+        } else {
+            const result = await callNL2API(query);
+            hideTypingIndicator(assistantMsgId);
+            renderNL2APIResult(assistantMsgId, result, query);
+            updateConversationMemory(query, result);
+        }
+    } catch (error) {
+        hideTypingIndicator(assistantMsgId);
+        updateMessageContent(assistantMsgId, `
+            <div class="error-message">
+                ❌ 请求失败: ${error.message}<br><br>
+                可能的原因：<br>
+                • 后端服务未启动<br>
+                • 网络连接问题<br>
+                • API配置错误
+            </div>
+        `);
+    } finally {
+        sendBtn.disabled = false;
+        input.focus();
+    }
+}
+
+function updateConversationMemory(userQuery, result) {
+    const data = result.data || {};
+    if (data.success) {
+        if (!window._convMemory) window._convMemory = { messages: [], lastReport: '', lastParams: {} };
+        window._convMemory.messages.push({ role: 'user', content: userQuery });
+        window._convMemory.messages.push({ role: 'assistant', content: data.summary || '' });
+        if (data.selected_api) window._convMemory.lastReport = data.selected_api.name || '';
+        if (data.parameters) window._convMemory.lastParams = data.parameters;
+        if (window._convMemory.messages.length > 20) {
+            window._convMemory.messages = window._convMemory.messages.slice(-20);
+        }
+    }
+}
+
+async function callAgentStream(query, messageId) {
+    const response = await fetch(`${API_BASE}/api/agent/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, context: {} }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let fullText = '';
+    let html = '<div class="agent-result">';
+    let currentStep = 0;
+    let hasData = false;
+    let chartConfig = null;
+
+    hideTypingIndicator(messageId);
+    updateMessageContent(messageId, '<div class="agent-result"></div>');
+    const container = document.querySelector(`#${messageId}_content .agent-result`);
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const dataStr = line.slice(6).trim();
+            if (!dataStr || dataStr === '[DONE]') continue;
+
+            try {
+                const event = JSON.parse(dataStr);
+
+                if (event.type === 'thinking') {
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', `<div class="agent-step agent-thinking">💭 ${escapeHtml(event.content)}</div>`);
+                        scrollToBottom();
+                    }
+                } else if (event.type === 'sql') {
+                    currentStep = event.step || currentStep + 1;
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', `
+                            <div class="agent-step agent-sql">
+                                <div class="chain-step-title">📝 步骤${currentStep}：执行SQL</div>
+                                <pre>${formatSQL(event.sql)}</pre>
+                            </div>
+                        `);
+                        scrollToBottom();
+                    }
+                } else if (event.type === 'data') {
+                    hasData = true;
+                    const rows = event.data || [];
+                    const totalRows = event.total_rows || rows.length;
+                    if (container) {
+                        let dataHtml = `<div class="agent-step agent-data">`;
+                        dataHtml += `<div class="chain-step-title">📊 步骤${event.step || currentStep}结果：获取 ${totalRows} 条记录${event.elapsed ? ' | 耗时 ' + event.elapsed + 's' : ''}</div>`;
+                        if (rows.length > 0) {
+                            dataHtml += `<div style="max-height:180px;overflow-y:auto;">`;
+                            dataHtml += `<table>`;
+                            const cols = Object.keys(rows[0]);
+                            dataHtml += `<tr>${cols.map(c => `<th title="${escapeHtml(c)}">${escapeHtml(c)}</th>`).join('')}</tr>`;
+                            rows.slice(0, 10).forEach(row => {
+                                dataHtml += `<tr>${cols.map(c => {
+                                    const val = String(row[c] ?? '');
+                                    const display = val.length > 20 ? val.substring(0, 20) + '...' : val;
+                                    return `<td title="${escapeHtml(val)}">${escapeHtml(display)}</td>`;
+                                }).join('')}</tr>`;
+                            });
+                            dataHtml += `</table></div>`;
+                        }
+                        if (event.error) dataHtml += `<div style="color:red;font-size:12px;">${escapeHtml(event.error)}</div>`;
+                        dataHtml += `</div>`;
+                        container.insertAdjacentHTML('beforeend', dataHtml);
+                        scrollToBottom();
+                    }
+                } else if (event.type === 'chart') {
+                    chartConfig = event.config;
+                    const chartId = `agent_chart_${messageId}_${Date.now()}`;
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', `
+                            <div class="agent-step" style="margin-top:8px;">
+                                <div class="chain-step-title">📊 数据可视化</div>
+                                <div id="${chartId}" class="chart-container"></div>
+                            </div>
+                        `);
+                        scrollToBottom();
+                        setTimeout(() => renderChart(chartId, event.config), 100);
+                    }
+                } else if (event.type === 'text') {
+                    fullText += event.content;
+                } else if (event.type === 'done') {
+                    // done
+                } else if (event.type === 'error') {
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', `<div class="error-message">❌ ${escapeHtml(event.message)}</div>`);
+                    }
+                }
+            } catch (e) {}
+        }
+    }
+
+    if (fullText && container) {
+        container.insertAdjacentHTML('beforeend', `
+            <div class="ai-summary" style="margin-top:12px;">
+                🤖 <strong>AI 智能分析：</strong><br>
+                ${escapeHtml(fullText)}
+            </div>
+        `);
+        scrollToBottom();
+    }
+
+    container.insertAdjacentHTML('beforeend', '</div>');
+
+    if (!window._convMemory) window._convMemory = { messages: [], lastReport: '', lastParams: {} };
+    window._convMemory.messages.push({ role: 'user', content: query });
+    window._convMemory.messages.push({ role: 'assistant', content: fullText });
+}
+
+/**
+ * 调用后端 NL2API 接口（带对话记忆）
+ */
+async function callNL2API(query) {
+    const startTime = Date.now();
+    
+    const body = { query };
+    if (window._convMemory && window._convMemory.messages.length > 0) {
+        body.context = {
+            last_report: window._convMemory.lastReport,
+            last_params: window._convMemory.lastParams,
+            recent_messages: window._convMemory.messages.slice(-6),
+        };
+    }
+    
+    const response = await fetch(`${API_BASE}/api/nl2api/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const json = await response.json();
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    
+    return {
+        ...json,
+        elapsed,
+    };
+}
+
+/**
+ * 根据语义实体过滤数据（前端智能过滤层）
+ */
+function filterDataBySemanticEntities(rawData, semanticEntities, parameters, userQuery) {
+    if (!rawData || rawData.length === 0) return { filteredData: rawData, filterInfo: null };
+
+    const targetDepts = extractTargetDepartments(semanticEntities, parameters, userQuery);
+    
+    if (!targetDepts || targetDepts.length === 0) {
+        return { filteredData: rawData, filterInfo: null };
+    }
+
+    const filtered = rawData.filter(row => {
+        const rowUpper = {};
+        for (const k in row) { rowUpper[k.toUpperCase()] = row[k]; }
+
+        for (const field of ['USRMRC', 'DEPT_CODE', 'DEPT', 'DEPARTMENT', '部门']) {
+            const val = rowUpper[field];
+            if (val !== undefined && val !== null) {
+                const valStr = String(val).toUpperCase().trim();
+                if (targetDepts.includes(valStr)) return true;
+                const rowDepts = valStr.split(',').map(d => d.trim()).filter(Boolean);
+                if (rowDepts.some(d => targetDepts.includes(d))) return true;
+            }
+        }
+
+        for (const k in row) {
+            const kLower = k.toLowerCase();
+            if (kLower.includes('dept') || kLower.includes('部门') || kLower.includes('mrc')) {
+                const val = String(row[k] || '').toUpperCase().trim();
+                if (targetDepts.some(td => val.includes(td))) return true;
+            }
+        }
+
+        return false;
+    });
+
+    const filterInfo = {
+        type: 'department',
+        values: targetDepts,
+        originalCount: rawData.length,
+        filteredCount: filtered.length
+    };
+
+    console.log(`[前端过滤] 部门: ${targetDepts.join(',')} | ${rawData.length} → ${filtered.length} 条`);
+
+    return { filteredData: filtered.length > 0 ? filtered : rawData, filterInfo };
+}
+
+function extractTargetDepartments(semanticEntities, parameters, userQuery) {
+    const VALID_DEPTS = ['CI', 'DS', 'EHS', 'FF', 'FM', 'LG', 'OM', 'PD', 'PM', 'QA', 'QC', 'TM', 'VM'];
+    const deptSet = new Set();
+
+    if (semanticEntities && semanticEntities.departments) {
+        semanticEntities.departments.forEach(d => {
+            const upper = String(d).toUpperCase().trim();
+            if (VALID_DEPTS.includes(upper)) deptSet.add(upper);
+        });
+    }
+
+    if (deptSet.size === 0 && parameters) {
+        const deptVal = parameters.dept || parameters.department || parameters.DEPT;
+        if (deptVal) {
+            String(deptVal).toUpperCase().split(',').map(d => d.trim()).filter(Boolean).forEach(d => {
+                if (VALID_DEPTS.includes(d)) deptSet.add(d);
+            });
+        }
+    }
+
+    if (deptSet.size === 0 && userQuery) {
+        const queryUpper = userQuery.toUpperCase();
+        VALID_DEPTS.forEach(d => {
+            if (queryUpper.includes(d)) deptSet.add(d);
+        });
+    }
+
+    return deptSet.size > 0 ? Array.from(deptSet) : null;
+}
+
+function rebuildChartConfig(filteredData, originalChartConfig) {
+    if (!filteredData || filteredData.length === 0 || !originalChartConfig) return originalChartConfig;
+    if (!originalChartConfig.xAxis || !originalChartConfig.series) return originalChartConfig;
+
+    const categories = [];
+    const values = [];
+
+    filteredData.forEach(item => {
+        if (typeof item !== 'object' || item === null) return;
+
+        let name = null;
+        for (const field of ['entity', 'USRMRC', 'DEPT_CODE', 'DEPT', 'DEPARTMENT', '部门', 'USRDESC', '员工', '流程类型']) {
+            if (item[field] !== undefined && item[field] !== null && item[field] !== '?') {
+                name = String(item[field]);
+                break;
+            }
+        }
+        if (!name) {
+            for (const k in item) {
+                const v = item[k];
+                if (typeof v === 'string' && v.trim()) { name = v; break; }
+            }
+        }
+        if (!name) name = `记录${categories.length + 1}`;
+
+        let val = null;
+        for (const field of ['value', 'order_count', '工单数量', '审批数量', 'count', 'amount', '总耗时', 'avg_process_days']) {
+            if (item[field] !== undefined && typeof item[field] === 'number') {
+                val = item[field];
+                break;
+            }
+        }
+        if (val === null) {
+            for (const k in item) {
+                if (typeof item[k] === 'number') { val = item[k]; break; }
+            }
+        }
+        if (val === null) val = 0;
+
+        categories.push(name);
+        values.push(val);
+    });
+
+    const newConfig = JSON.parse(JSON.stringify(originalChartConfig));
+
+    if (newConfig.xAxis && newConfig.xAxis.data !== undefined) {
+        newConfig.xAxis.data = categories;
+    }
+    if (newConfig.yAxis && newConfig.yAxis.data !== undefined) {
+        newConfig.yAxis.data = categories;
+    }
+    if (newConfig.series && newConfig.series.length > 0) {
+        if (newConfig.series[0].data !== undefined) {
+            newConfig.series[0].data = values;
+        }
+    }
+
+    return newConfig;
+}
+
+/**
+ * 渲染 NL2API 完整结果
+ */
+function renderNL2APIResult(messageId, result, userQuery) {
+    const data = result.data || {};
+    
+    let html = '';
+    let streamData = null;
+    
+    if (data.success) {
+        const { filteredData, filterInfo } = filterDataBySemanticEntities(
+            data.raw_data, data.semantic_entities, data.parameters, userQuery
+        );
+
+        streamData = filteredData;
+
+        const chartConfig = (filterInfo && filteredData.length > 0)
+            ? rebuildChartConfig(filteredData, data.chart_config)
+            : data.chart_config;
+
+        const displayCount = filterInfo ? filteredData.length : (data.raw_data_count || 0);
+
+        // 1. 显示 NL2API 链路信息
+        html += buildChainVisualization(data);
+        
+        // 2. 显示结果统计
+        html += buildResultStats(data, filterInfo, displayCount);
+        
+        // 3. 显示 AI 总结（始终流式输出）
+        html += `
+            <div class="ai-summary" id="stream_summary_${messageId}">
+                🤖 <strong>AI 智能分析：</strong><br>
+                <span class="streaming-text">分析中...</span>
+            </div>
+        `;
+        
+        // 4. 显示关键洞察
+        if (data.insights && data.insights.length > 0) {
+            html += '<div style="margin-top:10px;">';
+            html += '<strong style="color:#fa8c16;font-size:13px;">💡 关键洞察：</strong>';
+            html += '<ul style="margin:8px 0 0 20px;padding:0;">';
+            data.insights.forEach((insight, idx) => {
+                html += `<li style="color:#555;font-size:12px;line-height:1.6;margin:4px 0;">${idx + 1}. ${insight}</li>`;
+            });
+            html += '</ul></div>';
+        }
+        
+        // 5. 显示图表（如果有）
+        if (chartConfig && Object.keys(chartConfig).length > 0) {
+            const chartId = `chart_${messageId}_${Date.now()}`;
+            html += `
+                <div class="result-card" style="margin-top:12px;">
+                    <div class="result-card-header">📊 数据可视化</div>
+                    <div class="result-card-body">
+                        <div id="${chartId}" class="chart-container"></div>
+                    </div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                renderChart(chartId, chartConfig);
+            }, 100);
+        }
+        
+        // 6. 显示原始数据预览（如果有）
+        if (filteredData && filteredData.length > 0) {
+            html += buildDataPreview(filteredData, displayCount);
+        }
+        
+    } else {
+        html += `
+            <div class="error-message">
+                ❌ <strong>查询失败</strong><br><br>
+                <strong>错误信息：</strong>${data.error || '未知错误'}<br>
+                <strong>失败阶段：</strong>${data.error_stage || 'N/A'}<br><br>
+                ${data.intent ? `<em>已识别意图：${data.intent}</em>` : ''}
+            </div>
+        `;
+    }
+    
+    updateMessageContent(messageId, html);
+    
+    if (data.success && streamData && streamData.length > 0) {
+        streamAISummary(messageId, userQuery, streamData, data.summary);
+    }
+}
+
+async function streamAISummary(messageId, userQuery, data, backendSummary) {
+    const summaryEl = document.getElementById(`stream_summary_${messageId}`);
+    if (!summaryEl) return;
+    
+    const textEl = summaryEl.querySelector('.streaming-text');
+    if (!textEl) return;
+    
+    try {
+        const dataPreview = data.slice(0, 30);
+        const dataStr = JSON.stringify(dataPreview).slice(0, 3000);
+        const response = await fetch(`${API_BASE}/api/chat/stream`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                query: `请根据以下查询结果数据，用简洁的中文回答用户问题。\n\n用户问题：${userQuery}\n\n查询结果数据（共${data.length}条，展示前${dataPreview.length}条）：\n${dataStr}${backendSummary ? '\n\n后端分析参考：' + backendSummary : ''}`,
+                session_id: window._convMemory?.sessionId || '',
+            }),
+        });
+        
+        if (!response.ok) {
+            textEl.textContent = backendSummary || 'AI分析暂时不可用';
+            textEl.classList.remove('streaming-text');
+            return;
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        let buffer = '';
+        
+        textEl.textContent = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const d = line.slice(6).trim();
+                if (!d) continue;
+                try {
+                    const parsed = JSON.parse(d);
+                    if (parsed.type === 'text') {
+                        fullText += parsed.content;
+                        textEl.textContent = fullText;
+                        scrollToBottom();
+                    } else if (parsed.type === 'session' && parsed.session_id) {
+                        if (!window._convMemory) window._convMemory = { messages: [], lastReport: '', lastParams: {} };
+                        window._convMemory.sessionId = parsed.session_id;
+                    }
+                } catch (e) {}
+            }
+        }
+        
+        textEl.classList.remove('streaming-text');
+        
+    } catch (e) {
+        textEl.textContent = backendSummary || 'AI分析暂时不可用';
+        textEl.classList.remove('streaming-text');
+    }
+}
+
+/**
+ * 构建 NL2API 链路可视化
+ */
+function buildChainVisualization(data) {
+    let chainHtml = '<div class="nl2api-chain">';
+    
+    // Layer 1: 意图理解
+    if (data.user_intent) {
+        chainHtml += `
+            <div class="chain-step layer-1">
+                <div class="chain-step-icon">1</div>
+                <div class="chain-step-content">
+                    <div class="chain-step-title">🧠 意图理解</div>
+                    <div class="chain-step-detail">${escapeHtml(data.user_intent)}</div>
+                    <div class="chain-step-detail" style="margin-top:4px;">
+                        置信度: <code>${(data.confidence * 100).toFixed(0)}%</code>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Layer 2: API路由
+    if (data.selected_api) {
+        chainHtml += `
+            <div class="chain-step layer-2">
+                <div class="chain-step-icon">2</div>
+                <div class="chain-step-content">
+                    <div class="chain-step-title">🔀 API路由</div>
+                    <div class="chain-step-detail">
+                        选择API: <code>${escapeHtml(data.selected_api.name || data.selected_api.id)}</code>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Layer 3: 参数提取
+    if (data.parameters && Object.keys(data.parameters).length > 0) {
+        const paramsHtml = Object.entries(data.parameters)
+            .map(([k, v]) => `<code>${k}=${v}</code>`)
+            .join(' ');
+        
+        chainHtml += `
+            <div class="chain-step layer-3">
+                <div class="chain-step-icon">3</div>
+                <div class="chain-step-content">
+                    <div class="chain-step-title">📝 参数提取</div>
+                    <div class="chain-step-detail">${paramsHtml}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Layer 4 & 5: 执行和分析（合并显示）
+    chainHtml += `
+        <div class="chain-step layer-4">
+            <div class="chain-step-icon">4</div>
+            <div class="chain-step-content">
+                <div class="chain-step-title">⚡ 执行与分析</div>
+                <div class="chain-step-detail">
+                    获取 <code>${data.raw_data_count || 0}</code> 条记录 | 
+                    LLM调用 <code>${data.llm_calls || 0}</code> 次 |
+                    耗时 <code>${data.execution_time || 0}s</code>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    chainHtml += '</div>';
+    return chainHtml;
+}
+
+/**
+ * 构建结果统计卡片
+ */
+function buildResultStats(data, filterInfo, displayCount) {
+    const countToShow = displayCount !== undefined ? displayCount : (data.raw_data_count || 0);
+    
+    let filterBadge = '';
+    if (filterInfo && filterInfo.originalCount !== filterInfo.filteredCount) {
+        filterBadge = `
+            <div class="stat-item" style="background:#f6ffed;border:1px solid #b7eb8f;">
+                <div class="stat-value" style="color:#52c41a;font-size:14px;">🎯 ${filterInfo.values.join(', ')}</div>
+                <div class="stat-label">智能过滤 (原${filterInfo.originalCount}条→${filterInfo.filteredCount}条)</div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="result-card" style="margin-top:12px;">
+            <div class="result-card-header">✅ 查询成功</div>
+            <div class="result-card-body">
+                <div class="result-stats">
+                    ${filterBadge}
+                    <div class="stat-item">
+                        <div class="stat-value">${countToShow}</div>
+                        <div class="stat-label">数据条数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${data.llm_calls || 0}</div>
+                        <div class="stat-label">LLM调用次数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${(data.execution_time || 0).toFixed(1)}s</div>
+                        <div class="stat-label">执行耗时</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${((data.confidence || 0) * 100).toFixed(0)}%</div>
+                        <div class="stat-label">置信度</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * 构建数据预览表格
+ */
+function buildDataPreview(data, totalCount) {
+    if (!data || data.length === 0) return '';
+    
+    const previewData = data.slice(0, 5);  // 只显示前5条
+    const keys = Object.keys(previewData[0]);
+    
+    let tableHtml = `
+        <div class="result-card" style="margin-top:12px;">
+            <div class="result-card-header">📋 数据预览 (共${totalCount}条)</div>
+            <div class="result-card-body" style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;">
+                    <thead>
+                        <tr style="background:#fafafa;">
+                            ${keys.map(k => `<th style="padding:8px;border:1px solid #e8e8e8;text-align:left;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(k)}">${escapeHtml(k)}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${previewData.map(row => `
+                            <tr>
+                                ${keys.map(k => {
+                                    const val = String(row[k] ?? '');
+                                    const display = val.length > 20 ? val.substring(0, 20) + '...' : val;
+                                    return `<td style="padding:6px;border:1px solid #e8e8e8;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(val)}">${escapeHtml(display)}</td>`;
+                                }).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ${totalCount > 5 ? `<div style="text-align:center;color:#999;margin-top:8px;">... 仅显示前5条数据</div>` : ''}
+            </div>
+        </div>
+    `;
+    
+    return tableHtml;
+}
+
+/**
+ * 渲染 ECharts 图表
+ */
+function renderChart(containerId, chartConfig) {
+    const container = document.getElementById(containerId);
+    if (!container || typeof echarts === 'undefined') {
+        console.error('[ERROR] 无法渲染图表:', containerId);
+        return;
+    }
+    
+    // 销毁旧实例（如果有）
+    if (chartInstances[containerId]) {
+        chartInstances[containerId].dispose();
+    }
+    
+    // 创建新实例
+    const chart = echarts.init(container);
+    chart.setOption(chartConfig, true);
+    chartInstances[containerId] = chart;
+    
+    // 响应式
+    window.addEventListener('resize', () => {
+        if (chartInstances[containerId] && !chartInstances[containerId].isDisposed()) {
+            chartInstances[containerId].resize();
+        }
+    });
+}
+
+// ==================== FMCS设备监控功能 ====================
+
+/**
+ * 检测FMCS设备查询意图
+ * 支持的查询模式：
+ *   - "A1S115温度" / "A1S115湿度" / "A1S115压差"
+ *   - "纯化间温度" / "细胞培养间湿度" / "收获间压差"
+ *   - "CC2C4_001.Temp" (精确TagName)
+ *   - "最近3天纯化间温度" / "A1S115昨天的湿度"
+ *   - "设备温度" / "温度监控" (默认设备)
+ *   - "A1S115所有数据" (查看房间全部数据点)
+ */
+function detectFMCSIntent(query) {
+    const q = query.toLowerCase();
+    
+    // FMCS相关关键词（扩展：温度/湿度/压力/压差/流量/液位/转速/频率等）
+    const fmcsKeywords = ['温度', '湿度', '压差', '压力', '流量', '液位', '转速', '频率',
+                          'temp', 'humidity', 'pressure', 'flow', 'level',
+                          '温度曲线', '温度趋势', '温度监控', '温度数据',
+                          '湿度曲线', '湿度趋势', '湿度监控',
+                          '压差曲线', '压差趋势', '压差监控',
+                          '压力曲线', '压力趋势', '压力监控',
+                          '流量曲线', '流量趋势', '流量监控',
+                          '设备状态', '设备监控', '设备数据',
+                          'fmcs', '洁净区', '洁净室'];
+    const hasFmcsKeyword = fmcsKeywords.some(kw => q.includes(kw));
+    
+    // 也检测房间代码格式 (如 A1S115, B2Q108, CC2C4_001)
+    const hasRoomCode = /[A-Za-z]\d[A-Za-z]\d{2,3}/.test(query) || 
+                        /[A-Za-z]{2,4}\d{1,3}[_]\d{3}/.test(query);
+    
+    if (!hasFmcsKeyword && !hasRoomCode) return null;
+    
+    // 解析时间范围
+    let days = 1;
+    if (q.includes('7天') || q.includes('一周') || q.includes('最近7')) days = 7;
+    else if (q.includes('3天') || q.includes('最近3')) days = 3;
+    else if (q.includes('30天') || q.includes('一个月') || q.includes('最近30')) days = 30;
+    else if (q.includes('昨天') || q.includes('昨日')) days = 2;
+    else if (q.includes('今天') || q.includes('今日') || q.includes('当天')) days = 1;
+    else if (q.includes('上周') || q.includes('上星期')) days = 14;
+    
+    return { query: query, days: days };
+}
+
+/**
+ * 处理FMCS设备查询
+ */
+async function handleFMCSQuery(intent, messageId) {
+    const { query, days } = intent;
+    
+    try {
+        const resp = await fetch(`${API_BASE}/api/fmcs/query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: query, days: days }),
+        });
+        const result = await resp.json();
+        
+        if (!result.success) {
+            updateMessageContent(messageId, `<div class="error-message">查询失败: ${result.error || '未知错误'}</div>`);
+            return;
+        }
+        
+        const data = result.data || [];
+        const stats = result.stats || {};
+        const device = result.matched_device || {};
+        const measureInfo = result.measure_info || {};
+        const allMatched = result.all_matched || [];
+        
+        if (!data.length) {
+            updateMessageContent(messageId, `<div class="agent-result">
+                <div class="agent-summary">📊 设备 <b>${device.tagname || query}</b> 在 ${result.start_date?.substring(0,10)} ~ ${result.end_date?.substring(0,10)} 期间无数据</div>
+                ${allMatched.length > 1 ? `<div style="margin-top:8px;font-size:12px;color:#90a4ae;">其他匹配设备: ${allMatched.slice(1).map(d => d.tagname).join(', ')}</div>` : ''}
+            </div>`);
+            return;
+        }
+        
+        // 构建HTML
+        const chartId = `fmcs_chart_${Date.now()}`;
+        const label = measureInfo.label || '数值';
+        const unit = measureInfo.unit || '';
+        const color = measureInfo.color || '#4fc3f7';
+        
+        // 统计卡片
+        let statsHtml = '';
+        if (stats.count) {
+            statsHtml = `
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0;">
+                    <div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;text-align:center;">
+                        <div style="font-size:11px;color:#90a4ae;">当前</div>
+                        <div style="font-size:22px;font-weight:700;color:${color};">${stats.current}<span style="font-size:12px;color:#90a4ae;">${unit}</span></div>
+                    </div>
+                    <div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;text-align:center;">
+                        <div style="font-size:11px;color:#90a4ae;">最高</div>
+                        <div style="font-size:22px;font-weight:700;color:#ef5350;">${stats.max}<span style="font-size:12px;color:#90a4ae;">${unit}</span></div>
+                    </div>
+                    <div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;text-align:center;">
+                        <div style="font-size:11px;color:#90a4ae;">最低</div>
+                        <div style="font-size:22px;font-weight:700;color:#66bb6a;">${stats.min}<span style="font-size:12px;color:#90a4ae;">${unit}</span></div>
+                    </div>
+                    <div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;text-align:center;">
+                        <div style="font-size:11px;color:#90a4ae;">平均</div>
+                        <div style="font-size:22px;font-weight:700;color:#ffb74d;">${stats.avg}<span style="font-size:12px;color:#90a4ae;">${unit}</span></div>
+                    </div>
+                </div>`;
+        }
+        
+        // 其他匹配设备提示
+        let altHtml = '';
+        if (allMatched.length > 1) {
+            altHtml = `<div style="margin-top:8px;font-size:12px;color:#90a4ae;">
+                💡 其他匹配: ${allMatched.slice(1, 4).map(d => 
+                    `<span style="cursor:pointer;color:#4fc3f7;text-decoration:underline;" onclick="askQuickQuestion('${d.tagname} ${d.measure_label}')">${d.tagname}(${d.measure_label})</span>`
+                ).join(' | ')}
+            </div>`;
+        }
+        
+        const html = `
+            <div class="agent-result">
+                <div class="agent-summary">
+                    🏭 ${device.room_name ? device.room_name + ' · ' : ''}${label}监控
+                    <span style="font-size:11px;color:#90a4ae;margin-left:8px;">${device.tagname}</span>
+                    <br><span style="font-size:12px;color:#90a4ae;">近${days}天 · ${data.length}条数据 · ${result.start_date?.substring(0,16)} ~ ${result.end_date?.substring(0,16)}</span>
+                </div>
+                ${statsHtml}
+                <div id="${chartId}" style="width:100%;height:320px;background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;"></div>
+                ${stats.count ? `<div style="margin-top:8px;font-size:12px;color:#90a4ae;">
+                    📊 温差: ${(stats.max - stats.min).toFixed(2)}${unit} | 波动: ±${((stats.max - stats.min) / 2).toFixed(2)}${unit}
+                </div>` : ''}
+                ${altHtml}
+            </div>
+        `;
+        
+        updateMessageContent(messageId, html);
+        
+        // 渲染ECharts折线图
+        setTimeout(() => {
+            const container = document.getElementById(chartId);
+            if (!container || typeof echarts === 'undefined') return;
+            
+            const chart = echarts.init(container);
+            const times = data.map(d => d.datetime ? d.datetime.substring(5, 16) : '');
+            const values = data.map(d => d.value);
+            
+            chart.setOption({
+                backgroundColor: 'transparent',
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: p => `${p[0].axisValue}<br/>${p[0].marker} ${device.tagname}: <b>${p[0].value}${unit}</b>`
+                },
+                grid: { left: 50, right: 20, top: 20, bottom: 50 },
+                xAxis: {
+                    type: 'category', data: times,
+                    axisLabel: { fontSize: 10, color: '#90a4ae', rotate: times.length > 100 ? 30 : 0 },
+                    axisLine: { lineStyle: { color: '#2a4a6a' } },
+                },
+                yAxis: {
+                    type: 'value', name: unit,
+                    nameTextStyle: { color: '#90a4ae', fontSize: 11 },
+                    axisLabel: { color: '#90a4ae', fontSize: 10 },
+                    splitLine: { lineStyle: { color: '#1e3a5f', type: 'dashed' } },
+                },
+                series: [{
+                    type: 'line', data: values, smooth: true, symbol: 'none',
+                    lineStyle: { color: color, width: 2 },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: measureInfo.area_color || 'rgba(79,195,247,0.3)' },
+                            { offset: 1, color: 'rgba(79,195,247,0.02)' }
+                        ])
+                    },
+                    markLine: {
+                        silent: true,
+                        data: [
+                            { type: 'average', name: '平均', lineStyle: { color: '#ffb74d', type: 'dashed' } },
+                            { yAxis: stats.max, name: '最高', lineStyle: { color: '#ef5350', type: 'dashed' } },
+                            { yAxis: stats.min, name: '最低', lineStyle: { color: '#66bb6a', type: 'dashed' } },
+                        ]
+                    }
+                }],
+                dataZoom: [
+                    { type: 'inside', start: 0, end: 100 },
+                ],
+            }, true);
+            
+            chartInstances[chartId] = chart;
+            window.addEventListener('resize', () => {
+                if (chartInstances[chartId] && !chartInstances[chartId].isDisposed()) chartInstances[chartId].resize();
+            });
+        }, 150);
+        
+    } catch (e) {
+        updateMessageContent(messageId, `<div class="error-message">FMCS查询失败: ${e.message}</div>`);
+    }
+}
+
+// ==================== 工具函数 ====================
+
+/**
+ * 添加用户消息
+ */
+function addMessage(role, content) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const messageId = `msg_${Date.now()}`;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    messageDiv.id = messageId;
+    messageDiv.innerHTML = `
+        <div class="message-avatar">${role === 'user' ? '👤' : '🤖'}</div>
+        <div class="message-content">${escapeHtml(content)}</div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+    
+    return messageId;
+}
+
+/**
+ * 添加助手消息（返回消息ID）
+ */
+function addAssistantMessage(content) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const messageId = `msg_${Date.now()}`;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message assistant';
+    messageDiv.id = messageId;
+    messageDiv.innerHTML = `
+        <div class="message-avatar">🤖</div>
+        <div class="message-content" id="${messageId}_content">${content}</div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+    
+    return messageId;
+}
+
+/**
+ * 更新助手消息内容
+ */
+function updateMessageContent(messageId, content) {
+    const contentEl = document.getElementById(`${messageId}_content`);
+    if (contentEl) {
+        contentEl.innerHTML = content;
+        scrollToBottom();
+    }
+}
+
+/**
+ * 显示打字指示器
+ */
+function showTypingIndicator(messageId) {
+    updateMessageContent(messageId, `
+        <div class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    `);
+}
+
+/**
+ * 隐藏打字指示器
+ */
+function hideTypingIndicator(messageId) {
+    // 由 updateMessageContent 替换内容
+}
+
+/**
+ * 滚动到底部
+ */
+function scrollToBottom() {
+    const container = document.getElementById('chatMessages');
+    setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+    }, 50);
+}
+
+/**
+ * SQL格式化 + 语法高亮
+ */
+function formatSQL(sql) {
+    if (!sql) return '';
+    
+    let formatted = sql.trim();
+    
+    const breakBefore = ['SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'HAVING', 'LIMIT', 'UNION ALL', 'UNION', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'JOIN', 'ON', 'CROSS JOIN'];
+    const breakAfter = [','];
+    const indentKeywords = ['AND', 'OR', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'JOIN', 'ON', 'WHEN', 'THEN', 'ELSE', 'END'];
+    
+    breakBefore.forEach(kw => {
+        const regex = new RegExp('\\s+' + kw.replace(/ /g, '\\s+') + '\\s+', 'gi');
+        formatted = formatted.replace(regex, '\n' + kw + ' ');
+    });
+    
+    formatted = formatted.replace(/,\s*/g, ',\n       ');
+    
+    const cteMatch = formatted.match(/^(WITH\s)/i);
+    if (cteMatch) {
+        formatted = formatted.replace(/\)\s*,\s*/g, '),\n');
+        formatted = formatted.replace(/\)\s*AS\s*\(/gi, ') AS (');
+        formatted = formatted.replace(/AS\s*\(\s*/gi, 'AS (\n    ');
+    }
+    
+    const lines = formatted.split('\n');
+    let indent = 0;
+    const result = [];
+    
+    for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
+        
+        const upperLine = line.toUpperCase().trim();
+        
+        if (upperLine.match(/^(SELECT|FROM|WHERE|GROUP BY|ORDER BY|HAVING|UNION|LEFT JOIN|RIGHT JOIN|INNER JOIN|JOIN|WITH|SET)/)) {
+            indent = Math.max(0, indent);
+        }
+        if (upperLine.match(/^\)/)) {
+            indent = Math.max(0, indent - 1);
+        }
+        
+        result.push('  '.repeat(indent) + line);
+        
+        if (upperLine.match(/^(WITH|SELECT|FROM|WHERE|GROUP BY|ORDER BY|HAVING|LEFT JOIN|RIGHT JOIN|INNER JOIN|JOIN|ON|SET)/)) {
+            indent = Math.min(indent + 1, 4);
+        }
+        if (line.endsWith('(') || upperLine.endsWith('AS (')) {
+            indent = Math.min(indent + 1, 5);
+        }
+        if (upperLine.match(/^\)/)) {
+            indent = Math.max(0, indent - 1);
+        }
+    }
+    
+    formatted = result.join('\n');
+    
+    formatted = highlightSQL(formatted);
+    
+    return formatted;
+}
+
+function highlightSQL(sql) {
+    let html = escapeHtml(sql);
+    
+    html = html.replace(/(--[^\n]*)/g, '<span class="sql-comment">$1</span>');
+    
+    const keywords = ['SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'NOT', 'IN', 'IS', 'NULL', 'AS', 'ON', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'CROSS', 'GROUP BY', 'ORDER BY', 'HAVING', 'DISTINCT', 'BETWEEN', 'LIKE', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'WITH', 'UNION', 'ALL', 'TOP', 'INTO', 'SET', 'VALUES', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 'OVER', 'PARTITION BY', 'ASC', 'DESC', 'ROUND', 'CAST'];
+    keywords.sort((a, b) => b.length - a.length);
+    keywords.forEach(kw => {
+        const regex = new RegExp('\\b(' + kw.replace(/ /g, '\\s+') + ')\\b', 'gi');
+        html = html.replace(regex, '<span class="sql-keyword">$1</span>');
+    });
+    
+    const functions = ['COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'CONCAT', 'CONVERT', 'DATEDIFF', 'GETDATE', 'ROW_NUMBER', 'LAG', 'LEAD', 'COALESCE', 'ISNULL', 'SUBSTRING', 'REPLACE'];
+    functions.forEach(fn => {
+        const regex = new RegExp('\\b(' + fn + ')\\s*\\(', 'gi');
+        html = html.replace(regex, '<span class="sql-function">$1</span>(');
+    });
+    
+    html = html.replace(/(&#39;[^&#]*?&#39;|'[^']*?')/g, '<span class="sql-string">$1</span>');
+    
+    html = html.replace(/\b(\d+\.?\d*)\b/g, '<span class="sql-number">$1</span>');
+    
+    return html;
+}
+
+/**
+ * HTML转义
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * 自动调整文本框高度
+ */
+function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+}
+
+/**
+ * 处理键盘事件
+ */
+function handleKeyDown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+
+/**
+ * 快捷提问
+ */
+function askQuickQuestion(question) {
+    document.getElementById('userInput').value = question;
+    sendMessage();
+}
+</script>
+</body>
+</html>
