@@ -2462,9 +2462,21 @@ class NL2APIService:
         rows = cursor.fetchall()
         
         conn.close()
+
+        # 类型转换：Decimal → float, datetime → str，确保 JSON 可序列化
+        from decimal import Decimal as _Decimal
+        from datetime import datetime as _datetime, date as _date
+        for row in rows:
+            for key, value in row.items():
+                if isinstance(value, _Decimal):
+                    row[key] = float(value)
+                elif isinstance(value, _datetime):
+                    row[key] = value.strftime("%Y-%m-%d %H:%M:%S")
+                elif isinstance(value, _date):
+                    row[key] = value.strftime("%Y-%m-%d")
         
         return rows
-    
+
     def _get_db_config(self, connection_name: str) -> Dict[str, str]:
         """获取数据库连接配置（从.env环境变量读取，不硬编码）"""
         from utils.db_config import get_db_config
@@ -3068,6 +3080,18 @@ class NL2APIService:
             rows = cursor.fetchall()
             conn.close()
 
+            # 类型转换：Decimal → float, datetime → str，确保 JSON 可序列化
+            from decimal import Decimal as _Decimal
+            from datetime import datetime as _datetime, date as _date
+            for row in rows:
+                for key, value in row.items():
+                    if isinstance(value, _Decimal):
+                        row[key] = float(value)
+                    elif isinstance(value, _datetime):
+                        row[key] = value.strftime("%Y-%m-%d %H:%M:%S")
+                    elif isinstance(value, _date):
+                        row[key] = value.strftime("%Y-%m-%d")
+
             if isinstance(rows, list) and len(rows) > 0:
                 print(f"  [OK] 直连查询成功! ({len(rows)}条记录)")
                 return rows
@@ -3174,8 +3198,11 @@ def create_nl2api_blueprint():
         
         def safe_serialize(obj):
             """递归安全的JSON序列化"""
+            from decimal import Decimal as _Decimal
             if obj is None:
                 return None
+            elif isinstance(obj, _Decimal):
+                return float(obj)
             elif isinstance(obj, (str, int, float, bool)):
                 return obj
             elif isinstance(obj, dict):
@@ -3184,8 +3211,6 @@ def create_nl2api_blueprint():
                 return [safe_serialize(item) for item in obj]
             elif hasattr(obj, 'isoformat'):
                 return obj.isoformat()
-            elif callable(obj):
-                return str(obj)
             else:
                 try:
                     _json.dumps(obj)

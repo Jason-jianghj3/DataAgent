@@ -988,6 +988,19 @@ class AgentQueryEngine:
             conn.close()
 
             truncated = rows[:MAX_SQL_ROWS]
+
+            # 类型转换：Decimal → float, datetime → str，确保 JSON 可序列化
+            from decimal import Decimal as _Decimal
+            from datetime import datetime as _datetime, date as _date
+            for row in truncated:
+                for key, value in row.items():
+                    if isinstance(value, _Decimal):
+                        row[key] = float(value)
+                    elif isinstance(value, _datetime):
+                        row[key] = value.strftime("%Y-%m-%d %H:%M:%S")
+                    elif isinstance(value, _date):
+                        row[key] = value.strftime("%Y-%m-%d")
+
             logger.info(
                 f"[AgentQueryEngine] 直连SQL执行成功 | 连接={connection_name} | "
                 f"行数={len(rows)} | 耗时={elapsed:.2f}s")
