@@ -76,3 +76,4 @@ FMCS数据点.xlsx
 
 # 本地启动脚本
 start.bat
+test_decimal_serialization.py

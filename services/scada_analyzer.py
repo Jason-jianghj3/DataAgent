@@ -145,11 +145,21 @@ class SCADAAnalyzer:
         # 处理末尾仍在超标的时段
         if current_start is not None:
             duration_min = (prev_dt - current_start).total_seconds() / 60
-            periods.append({
+            # 计算末尾时段的最大值
+            tail_max = max(
+                (p["value"] for p in data
+                 if current_start <= datetime.strptime(p["datetime"], "%Y-%m-%d %H:%M:%S") <= prev_dt
+                 and op_func(p["value"], threshold)),
+                default=None
+            )
+            period_data = {
                 "start": current_start.strftime("%Y-%m-%d %H:%M"),
                 "end": prev_dt.strftime("%Y-%m-%d %H:%M"),
                 "duration_min": round(duration_min, 1),
-            })
+            }
+            if tail_max is not None:
+                period_data["max_value"] = round(tail_max, 2)
+            periods.append(period_data)
 
         total_duration = sum(p["duration_min"] for p in periods)
         max_duration = max((p["duration_min"] for p in periods), default=0)
@@ -297,13 +307,13 @@ class SCADAAnalyzer:
 
         # 2. 提取阈值
         threshold_patterns = [
-            r'超过\s*(\d+\.?\d*)\s*[℃°]?',   # 超过22.4℃
-            r'大于\s*(\d+\.?\d*)\s*[℃°]?',   # 大于22.4
-            r'高于\s*(\d+\.?\d*)\s*[℃°]?',   # 高于22.4
-            r'低于\s*(\d+\.?\d*)\s*[℃°]?',   # 低于22.4
-            r'小于\s*(\d+\.?\d*)\s*[℃°]?',   # 小于22.4
-            r'(\d+\.?\d*)\s*[℃°].*以上',      # 22.4℃以上
-            r'(\d+\.?\d*)\s*[℃°].*以下',      # 22.4℃以下
+            r'超过\s*(\d+\.?\d*)\s*[℃°摄氏度]?',   # 超过22.4℃ / 超过22摄氏度
+            r'大于\s*(\d+\.?\d*)\s*[℃°摄氏度]?',   # 大于22.4
+            r'高于\s*(\d+\.?\d*)\s*[℃°摄氏度]?',   # 高于22.4
+            r'低于\s*(\d+\.?\d*)\s*[℃°摄氏度]?',   # 低于22.4
+            r'小于\s*(\d+\.?\d*)\s*[℃°摄氏度]?',   # 小于22.4
+            r'(\d+\.?\d*)\s*[℃°摄氏度].*以上',      # 22.4℃以上
+            r'(\d+\.?\d*)\s*[℃°摄氏度].*以下',      # 22.4℃以下
         ]
         for pattern in threshold_patterns:
             m = re.search(pattern, query)
@@ -333,8 +343,11 @@ class SCADAAnalyzer:
         # 5. 提取设备
         # 先尝试房间代码匹配
         room_codes = re.findall(r'[A-Za-z]\d[A-Za-z]\d{2,3}', query)
-        # 再尝试中文房间名
-        room_names = re.findall(r'(纯化间|培养间|配制间|缓冲间|清洗间|接种间|收获间|灭菌间|储藏间|洁净区|洁净室)', query)
+        # 再尝试中文房间名（扩展列表，覆盖更多房间）
+        room_names = re.findall(
+            r'(纯化间|培养间|配制间|缓冲间|清洗间|接种间|收获间|灭菌间|储藏间|'
+            r'洁净区|洁净室|灌装间|冻干间|包装间|称量间|检验间|'
+            r'空调机房|冷库|仓库|走廊|更衣间|气闸间)', query)
 
         # 提取用户提到的测量类型
         measure_type_filter = None

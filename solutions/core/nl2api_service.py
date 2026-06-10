@@ -36,6 +36,9 @@ import re
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from utils.serialization import safe_json_dumps, safe_serialize, convert_rows_types
+from utils.db_executor import execute_query, execute_query_raw
+from tools import parse_json_response as _parse_json_response_public
 
 logger = logging.getLogger(__name__)
 
@@ -1349,7 +1352,7 @@ class NL2APIService:
                         fs_lines = ["## 历史相似查询参考（请参考这些成功案例选择API）"]
                         for i, item in enumerate(similar_examples, 1):
                             ex = item['example']
-                            params_str = json.dumps(ex.parameters, ensure_ascii=False) if ex.parameters else "{}"
+                            params_str = safe_json_dumps(ex.parameters, ensure_ascii=False) if ex.parameters else "{}"
                             fs_lines.append(
                                 f"{i}. 用户问:\"{ex.query}\" → 选API:{ex.api_name} | 参数:{params_str} | 类型:{ex.analysis_type} (相似度{item['score']:.2f})"
                             )
@@ -1914,7 +1917,7 @@ class NL2APIService:
 "{user_query}"
 
 ## 上次提取的参数（有误）
-{json.dumps(original_params, ensure_ascii=False, indent=2)}
+{safe_json_dumps(original_params, ensure_ascii=False, indent=2)}
 
 {error_summary}
 
@@ -2059,7 +2062,7 @@ class NL2APIService:
                 pinfo['example'] = param.example_value
             params_info.append(pinfo)
 
-        params_json = json.dumps(params_info, ensure_ascii=False, indent=2)
+        params_json = safe_json_dumps(params_info, ensure_ascii=False, indent=2)
 
         prompt = f"""你是一个参数提取专家。请从用户查询中提取API参数值。
 
@@ -2412,70 +2415,18 @@ class NL2APIService:
     def _execute_sql_direct(self, sql: str, connection_name: str = 'EAM') -> List[Dict]:
         """
         通过pymssql直连SQL Server执行SELECT查询（只读）
-        
+
         安全措施:
           - 只允许SELECT语句
           - 连接超时限制
           - 结果集大小限制(TOP 1000)
         """
-        import pymssql
-        
-        # 1. 先移除SQL注释（防止注释干扰开头检查）
-        sql_cleaned = sql
-        # 移除单行注释 -- ...
-        sql_cleaned = re.sub(r'--.*$', '', sql_cleaned, flags=re.MULTILINE)
-        # 移除 /* ... */ 多行注释
-        sql_cleaned = re.sub(r'/\*.*?\*/', '', sql_cleaned, flags=re.DOTALL)
-        
-        # 安全检查：只允许SELECT查询（包括CTE WITH ... SELECT）
-        sql_stripped = sql_cleaned.strip()
-        sql_upper = sql_stripped.upper()
-        
-        allowed_starts = ('SELECT', 'WITH')
-        if not any(sql_upper.startswith(s) for s in allowed_starts):
-            raise ValueError(f"安全限制: 只允许SELECT/CTE查询, 实际开头: {sql_upper[:30]}")
-        
-        forbidden_keywords = ['INSERT ', 'UPDATE ', 'DELETE ', 'DROP ', 'CREATE ', 
-                              'ALTER ', 'TRUNCATE ', 'EXEC ', 'EXECUTE ']
-        for kw in forbidden_keywords:
-            if kw.upper() in sql_upper:
-                raise ValueError(f"安全限制: 不允许{kw}操作")
-        
-        # 数据库连接配置（从环境变量或配置读取）
-        db_config = self._get_db_config(connection_name)
-        
-        conn = pymssql.connect(
-            server=db_config.get('server') or db_config.get('host', 'localhost'),
-            port=db_config.get('port', 1433),
-            user=db_config.get('user', ''),
-            password=db_config.get('password', ''),
-            database=db_config.get('database', ''),
-            timeout=db_config.get('timeout', 30),
-            login_timeout=db_config.get('login_timeout', 15),
-            charset='UTF-8',
-            as_dict=True
-        )
-        
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        
-        rows = cursor.fetchall()
-        
-        conn.close()
+        from utils.db_executor import validate_sql_safety
+        is_safe, error_msg = validate_sql_safety(sql)
+        if not is_safe:
+            raise ValueError(error_msg)
 
-        # 类型转换：Decimal → float, datetime → str，确保 JSON 可序列化
-        from decimal import Decimal as _Decimal
-        from datetime import datetime as _datetime, date as _date
-        for row in rows:
-            for key, value in row.items():
-                if isinstance(value, _Decimal):
-                    row[key] = float(value)
-                elif isinstance(value, _datetime):
-                    row[key] = value.strftime("%Y-%m-%d %H:%M:%S")
-                elif isinstance(value, _date):
-                    row[key] = value.strftime("%Y-%m-%d")
-        
-        return rows
+        return execute_query_raw(sql, connection_name=connection_name)
 
     def _get_db_config(self, connection_name: str) -> Dict[str, str]:
         """获取数据库连接配置（从.env环境变量读取，不硬编码）"""
@@ -3057,48 +3008,14 @@ class NL2APIService:
     
     def _call_fanruan_api(self, sql: str, connection: str = 'EAM') -> Optional[List[Dict]]:
         """直连数据库执行SQL（原帆软OpenAPI已替换为pymssql直连）"""
-
-        import pymssql
-
         try:
-            db_config = self._get_db_config(connection)
-
-            conn = pymssql.connect(
-                server=db_config.get('server') or db_config.get('host', 'localhost'),
-                port=db_config.get('port', 1433),
-                user=db_config.get('user', ''),
-                password=db_config.get('password', ''),
-                database=db_config.get('database', ''),
-                timeout=db_config.get('timeout', 60),
-                login_timeout=db_config.get('login_timeout', 15),
-                charset='UTF-8',
-                as_dict=True
-            )
-
-            cursor = conn.cursor()
-            cursor.execute(sql)
-            rows = cursor.fetchall()
-            conn.close()
-
-            # 类型转换：Decimal → float, datetime → str，确保 JSON 可序列化
-            from decimal import Decimal as _Decimal
-            from datetime import datetime as _datetime, date as _date
-            for row in rows:
-                for key, value in row.items():
-                    if isinstance(value, _Decimal):
-                        row[key] = float(value)
-                    elif isinstance(value, _datetime):
-                        row[key] = value.strftime("%Y-%m-%d %H:%M:%S")
-                    elif isinstance(value, _date):
-                        row[key] = value.strftime("%Y-%m-%d")
-
-            if isinstance(rows, list) and len(rows) > 0:
+            rows = execute_query_raw(sql, connection_name=connection, timeout=60)
+            if rows:
                 print(f"  [OK] 直连查询成功! ({len(rows)}条记录)")
                 return rows
             else:
                 print(f"  [WARN] 返回空数据")
                 return []
-
         except Exception as e:
             logger.error(f"[直连DB] SQL执行失败: {e}")
             import traceback
@@ -3129,52 +3046,8 @@ class NL2APIService:
             return None
     
     def _parse_json_response(self, text: str) -> Optional[Dict]:
-        """解析LLM响应中的JSON（支持嵌套结构和markdown代码块）"""
-        
-        if not text:
-            return None
-        
-        # 方法1: 尝试提取markdown代码块中的JSON
-        json_match = re.search(r'```(?:json)?\s*\n(.*?)\n```', text, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group(1).strip())
-            except:
-                pass
-        
-        # 方法2: 提取第一个{...}（使用计数器处理嵌套）
-        start_idx = text.find('{')
-        if start_idx == -1:
-            return None
-        
-        brace_count = 0
-        end_idx = start_idx
-        
-        for i in range(start_idx, len(text)):
-            if text[i] == '{':
-                brace_count += 1
-            elif text[i] == '}':
-                brace_count -= 1
-                
-            if brace_count == 0:
-                end_idx = i + 1
-                break
-        
-        if end_idx > start_idx:
-            json_str = text[start_idx:end_idx]
-            try:
-                return json.loads(json_str)
-            except json.JSONDecodeError as e:
-                print(f"    [DEBUG] JSON解析错误: {e}")
-                print(f"    [DEBUG] JSON片段: {json_str[:200]}...")
-        
-        # 方法3: 直接尝试解析整个文本
-        try:
-            return json.loads(text.strip())
-        except:
-            pass
-        
-        return None
+        """解析LLM响应中的JSON，委托给统一的 OutputParser"""
+        return _parse_json_response_public(text)
 
 
 # ============================================================
@@ -3193,31 +3066,7 @@ def create_nl2api_blueprint():
     @nl2api_bp.route('/query', methods=['POST'])
     def query():
         """NL2API查询接口"""
-        
-        import json as _json
-        
-        def safe_serialize(obj):
-            """递归安全的JSON序列化"""
-            from decimal import Decimal as _Decimal
-            if obj is None:
-                return None
-            elif isinstance(obj, _Decimal):
-                return float(obj)
-            elif isinstance(obj, (str, int, float, bool)):
-                return obj
-            elif isinstance(obj, dict):
-                return {k: safe_serialize(v) for k, v in obj.items()}
-            elif isinstance(obj, (list, tuple)):
-                return [safe_serialize(item) for item in obj]
-            elif hasattr(obj, 'isoformat'):
-                return obj.isoformat()
-            else:
-                try:
-                    _json.dumps(obj)
-                    return obj
-                except (TypeError, ValueError):
-                    return str(obj)
-        
+
         try:
             data = request.get_json(force=True)
             user_query = data.get('query', '').strip()

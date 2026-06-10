@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import config
 from utils.logger import logger
+from utils.serialization import safe_json_dumps
 
 # 创建Flask应用
 app = Flask(__name__)
@@ -407,11 +408,11 @@ def chat_stream():
     def generate():
         full_text = ""
         try:
-            yield f"data: {json.dumps({'type': 'session', 'session_id': session_id}, ensure_ascii=False)}\n\n"
+            yield f"data: {safe_json_dumps({'type': 'session', 'session_id': session_id}, ensure_ascii=False)}\n\n"
 
             if matched_datasets:
                 dataset_info = matched_datasets[0]
-                yield f"data: {json.dumps({'type': 'dataset', 'data': dataset_info}, ensure_ascii=False)}\n\n"
+                yield f"data: {safe_json_dumps({'type': 'dataset', 'data': dataset_info}, ensure_ascii=False)}\n\n"
 
             messages = session.build_context_messages(
                 user_query=resolved_query,
@@ -421,7 +422,7 @@ def chat_stream():
             llm = get_llm_service()
             for chunk in llm.chat_stream(messages):
                 full_text += chunk
-                yield f"data: {json.dumps({'type': 'text', 'content': chunk}, ensure_ascii=False)}\n\n"
+                yield f"data: {safe_json_dumps({'type': 'text', 'content': chunk}, ensure_ascii=False)}\n\n"
 
             session.add_exchange(resolved_query, full_text)
             if matched_datasets:
@@ -433,11 +434,11 @@ def chat_stream():
                     result_summary=full_text[:200],
                 )
 
-            yield f"data: {json.dumps({'type': 'done', 'session_id': session_id}, ensure_ascii=False)}\n\n"
+            yield f"data: {safe_json_dumps({'type': 'done', 'session_id': session_id}, ensure_ascii=False)}\n\n"
 
         except Exception as e:
             logger.error(f"[Chat Stream] 流式生成异常: {e}")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
+            yield f"data: {safe_json_dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
 
     return Response(
         stream_with_context(generate()),
@@ -480,11 +481,11 @@ def agent_query():
     def generate():
         try:
             for event in engine.query(query, context=context):
-                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+                yield f"data: {safe_json_dumps(event, ensure_ascii=False)}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             logger.error(f"[Agent] 查询异常: {e}")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
+            yield f"data: {safe_json_dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
             yield "data: [DONE]\n\n"
 
     return Response(
