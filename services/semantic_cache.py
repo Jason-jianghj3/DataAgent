@@ -74,7 +74,7 @@ class SemanticCache:
 
             return None
 
-    def store(self, query: str, dsl: dict, sql: str, result_data: dict = None, verified: bool = False):
+    def store(self, query: str, dsl: dict, sql: str, result_data: dict = None, verified: bool = False, connection_name: str = ""):
         """存储查询到缓存"""
         if not query:
             return
@@ -95,6 +95,7 @@ class SemanticCache:
             "normalized": normalized,
             "dsl": dsl,
             "sql": sql,
+            "connection_name": connection_name,
             "result_hash": result_hash,
             "verified": verified,
             "hit_count": 0,

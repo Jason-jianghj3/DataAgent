@@ -8,6 +8,23 @@ from datetime import datetime, timedelta
 from utils.logger import logger
 
 
+def _parse_dt(dt_str: str) -> datetime:
+    """安全解析datetime字符串，兼容带小数秒的格式如 '2025-05-21 10:30:00.0000000'"""
+    # 截断小数秒部分
+    clean = dt_str.split('.')[0].strip()
+    return datetime.strptime(clean, "%Y-%m-%d %H:%M:%S")
+
+
+def _parse_dt_hour(dt_str: str) -> datetime:
+    """解析小时级datetime字符串如 '2025-05-21 10:00'"""
+    return datetime.strptime(dt_str, "%Y-%m-%d %H:00")
+
+
+def _parse_dt_date(dt_str: str) -> datetime:
+    """解析日期字符串如 '2025-05-21'"""
+    return datetime.strptime(dt_str, "%Y-%m-%d")
+
+
 class SCADAAnalyzer:
     """SCADA数据智能分析引擎"""
 
@@ -73,7 +90,8 @@ class SCADAAnalyzer:
                         if isinstance(dt, datetime):
                             dt_str = dt.strftime('%Y-%m-%d %H:%M:%S')
                         else:
-                            dt_str = str(dt)
+                            # 截断小数秒，如 "2025-05-21 10:30:00.0000000" → "2025-05-21 10:30:00"
+                            dt_str = str(dt).split('.')[0]
                         try:
                             val = round(float(val), 4)
                         except (ValueError, TypeError):
@@ -120,7 +138,7 @@ class SCADAAnalyzer:
         for point in data:
             dt_str = point["datetime"]
             val = point["value"]
-            dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+            dt = _parse_dt(dt_str)
 
             if op_func(val, threshold):
                 if current_start is None:
@@ -135,7 +153,7 @@ class SCADAAnalyzer:
                         "duration_min": round(duration_min, 1),
                         "max_value": max(
                             p["value"] for p in data
-                            if current_start <= datetime.strptime(p["datetime"], "%Y-%m-%d %H:%M:%S") <= prev_dt
+                            if current_start <= _parse_dt(p["datetime"]) <= prev_dt
                             and op_func(p["value"], threshold)
                         ) if duration_min > 0 else val,
                     })
@@ -148,7 +166,7 @@ class SCADAAnalyzer:
             # 计算末尾时段的最大值
             tail_max = max(
                 (p["value"] for p in data
-                 if current_start <= datetime.strptime(p["datetime"], "%Y-%m-%d %H:%M:%S") <= prev_dt
+                 if current_start <= _parse_dt(p["datetime"]) <= prev_dt
                  and op_func(p["value"], threshold)),
                 default=None
             )
@@ -406,8 +424,8 @@ class SCADAAnalyzer:
         end = time_range.get("end_date")
         if start and end:
             try:
-                s = datetime.strptime(start, "%Y-%m-%d %H:%M:%S")
-                e = datetime.strptime(end, "%Y-%m-%d %H:%M:%S")
+                s = _parse_dt(start)
+                e = _parse_dt(end)
                 hours = (e - s).total_seconds() / 3600
                 if hours > 72:  # 超过3天，用5分钟分辨率
                     result["resolution"] = 300000
@@ -480,8 +498,24 @@ class SCADAAnalyzer:
         device_info: Dict[str, Dict],
         analysis_type: str = "raw",
         threshold_info: Dict = None,
+        aggregation_data: Dict[str, List[Dict]] = None,
     ) -> Dict:
-        """构建ECharts图表配置"""
+        """构建ECharts图表配置
+
+        Args:
+            multi_data: {tagname: [{datetime, value}, ...]} 原始时序数据
+            device_info: {tagname: {cn_desc, room_name, measure_type, ...}}
+            analysis_type: raw / threshold / comparison / trend / aggregation
+            threshold_info: {threshold, operator} 阈值分析参数
+            aggregation_data: {tagname: [{hour/date, avg, max, min, count}, ...]} 聚合数据
+        """
+        colors = ["#4fc3f7", "#66bb6a", "#ffb74d", "#ef5350", "#ab47bc", "#26c6da"]
+
+        # 聚合统计模式：使用聚合数据构建柱状图+折线图
+        if analysis_type == "aggregation" and aggregation_data:
+            return self._build_agg_chart_config(aggregation_data, device_info, colors)
+
+        # 原始时序模式
         # 收集所有时间点
         all_dts = set()
         for tagname, data in multi_data.items():
@@ -491,7 +525,6 @@ class SCADAAnalyzer:
 
         # 构建系列
         series = []
-        colors = ["#4fc3f7", "#66bb6a", "#ffb74d", "#ef5350", "#ab47bc", "#26c6da"]
         for i, (tagname, data) in enumerate(multi_data.items()):
             if not data:
                 continue
@@ -500,7 +533,7 @@ class SCADAAnalyzer:
             color = info.get("color", colors[i % len(colors)])
             series_data = [dt_val_map.get(dt) for dt in sorted_dts]
 
-            series.append({
+            s = {
                 "name": info.get("cn_desc", tagname),
                 "type": "line",
                 "data": series_data,
@@ -508,7 +541,11 @@ class SCADAAnalyzer:
                 "symbol": "none",
                 "lineStyle": {"width": 2, "color": color},
                 "itemStyle": {"color": color},
-                "areaStyle": {
+            }
+
+            # 非对比模式添加面积渐变
+            if analysis_type != "comparison":
+                s["areaStyle"] = {
                     "color": {
                         "type": "linear",
                         "x": 0, "y": 0, "x2": 0, "y2": 1,
@@ -517,11 +554,11 @@ class SCADAAnalyzer:
                             {"offset": 1, "color": color + "05"},
                         ]
                     }
-                },
-            })
+                }
+
+            series.append(s)
 
         # 阈值标线
-        markLine = None
         if threshold_info and threshold_info.get("threshold") is not None:
             threshold_val = threshold_info["threshold"]
             markLine = {
@@ -533,20 +570,29 @@ class SCADAAnalyzer:
             if series:
                 series[0]["markLine"] = markLine
 
-        # 时间格式化 - 根据时间跨度选择格式
+        # 趋势分析添加平均标线
+        if analysis_type == "trend" and series:
+            for s in series:
+                s["markLine"] = {
+                    "silent": True,
+                    "data": [{"type": "average", "name": "平均"}],
+                    "lineStyle": {"color": "#ffb74d", "type": "dashed"},
+                }
+
+        # 时间格式化
         categories = []
         time_span_days = 1
         if sorted_dts:
             try:
-                first_dt = datetime.strptime(sorted_dts[0], "%Y-%m-%d %H:%M:%S")
-                last_dt = datetime.strptime(sorted_dts[-1], "%Y-%m-%d %H:%M:%S")
+                first_dt = _parse_dt(sorted_dts[0])
+                last_dt = _parse_dt(sorted_dts[-1])
                 time_span_days = max(1, (last_dt - first_dt).days + 1)
             except ValueError:
                 pass
 
         for dt_str in sorted_dts:
             try:
-                dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+                dt = _parse_dt(dt_str)
                 if time_span_days > 1:
                     categories.append(dt.strftime("%m/%d %H:%M"))
                 else:
@@ -554,7 +600,6 @@ class SCADAAnalyzer:
             except ValueError:
                 categories.append(dt_str)
 
-        # 根据数据点数量决定x轴标签间隔
         label_interval = max(1, len(categories) // 10)
 
         config = {
@@ -583,6 +628,84 @@ class SCADAAnalyzer:
         return config
 
     @staticmethod
+    def _build_agg_chart_config(aggregation_data: Dict[str, List[Dict]],
+                                 device_info: Dict[str, Dict],
+                                 colors: list) -> Dict:
+        """构建聚合统计图表配置（柱状图+折线图）"""
+        series = []
+        all_keys = set()
+
+        for tagname, agg_list in aggregation_data.items():
+            if not agg_list:
+                continue
+            for item in agg_list:
+                key = item.get("hour") or item.get("date") or ""
+                all_keys.add(key)
+
+        sorted_keys = sorted(all_keys)
+        categories = []
+        for k in sorted_keys:
+            try:
+                dt = _parse_dt_hour(k)
+                categories.append(dt.strftime("%m/%d %H:00"))
+            except ValueError:
+                try:
+                    dt = _parse_dt_date(k)
+                    categories.append(dt.strftime("%m/%d"))
+                except ValueError:
+                    categories.append(k[5:] if len(k) > 5 else k)
+
+        for i, (tagname, agg_list) in enumerate(aggregation_data.items()):
+            if not agg_list:
+                continue
+            info = device_info.get(tagname, {})
+            color = info.get("color", colors[i % len(colors)])
+            key_map = {}
+            for item in agg_list:
+                key = item.get("hour") or item.get("date") or ""
+                key_map[key] = item
+
+            # 均值折线
+            avg_data = [round(key_map.get(k, {}).get("avg", 0), 2) for k in sorted_keys]
+            series.append({
+                "name": f"{info.get('cn_desc', tagname)} 均值",
+                "type": "line",
+                "data": avg_data,
+                "smooth": True,
+                "lineStyle": {"width": 2, "color": color},
+                "itemStyle": {"color": color},
+            })
+            # 最高值柱状
+            max_data = [round(key_map.get(k, {}).get("max", 0), 2) for k in sorted_keys]
+            series.append({
+                "name": f"{info.get('cn_desc', tagname)} 最高",
+                "type": "bar",
+                "data": max_data,
+                "barMaxWidth": 20,
+                "itemStyle": {"color": color + "60"},
+            })
+
+        label_interval = max(1, len(categories) // 12)
+
+        return {
+            "tooltip": {"trigger": "axis"},
+            "legend": {"data": [s["name"] for s in series], "top": 5},
+            "grid": {"left": "3%", "right": "4%", "bottom": "18%", "top": "15%", "containLabel": True},
+            "xAxis": {
+                "type": "category",
+                "data": categories,
+                "axisLabel": {"interval": label_interval, "fontSize": 11, "color": "#666"},
+                "axisTick": {"alignWithLabel": True},
+            },
+            "yAxis": {"type": "value", "axisLabel": {"fontSize": 11}},
+            "dataZoom": [
+                {"type": "inside", "start": 0, "end": 100},
+                {"type": "slider", "start": 0, "end": 100, "height": 20, "bottom": 5},
+            ],
+            "series": series,
+        }
+
+    @staticmethod
     def _std_dev(values: List[float]) -> float:
         if len(values) < 2:
             return 0
@@ -596,7 +719,7 @@ class SCADAAnalyzer:
         hourly = {}
         for p in data:
             try:
-                dt = datetime.strptime(p["datetime"], "%Y-%m-%d %H:%M:%S")
+                dt = _parse_dt(p["datetime"])
                 hour_key = dt.strftime("%Y-%m-%d %H:00")
             except ValueError:
                 continue
@@ -622,7 +745,7 @@ class SCADAAnalyzer:
         daily = {}
         for p in data:
             try:
-                dt = datetime.strptime(p["datetime"], "%Y-%m-%d %H:%M:%S")
+                dt = _parse_dt(p["datetime"])
                 day_key = dt.strftime("%Y-%m-%d")
             except ValueError:
                 continue

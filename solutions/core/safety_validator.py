@@ -84,22 +84,22 @@ class SQLSafetyValidator:
 
     # 第4层: 正则表达式模式 (检测复杂注入攻击)
     INJECTION_PATTERNS = [
-        # 注释注入
-        r'/\*.*?\*/',  # 块注释
-        r'--.*?$',     # 行注释
-        
+        # 注释注入 - 仅检测分号+注释（真正的注入特征），允许合法注释
+        r';\s*--',           # 分号+行注释（SQL注入常见手法）
+        r';\s*/\*',          # 分号+块注释
+
         # UNION注入
         r'\bUNION\b\s+\b(SELECT)\b',
-        
+
         # 布尔盲注
         r'\bAND\b\s+\d+\s*=\s*\d+',
         r'\bOR\b\s+\d+\s*=\s*\d+',
-        
+
         # 时间盲注
         r'BENCHMARK\s*\(',
         r'SLEEP\s*\(',
         r'WAITFOR\s+DELAY',
-        
+
         # 编码绕过尝试
         r'0x[0-9a-fA-F]+',  # 十六进制编码
         r'\bCHAR\s*\(\s*\d+',  # CHAR()函数编码

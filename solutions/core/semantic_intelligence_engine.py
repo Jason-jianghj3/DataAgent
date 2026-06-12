@@ -229,9 +229,13 @@ class DataSemanticDiscoverer:
     4. 业务上下文理解 - 这些数据在说什么故事？
     """
     
-    def __init__(self):
+    def __init__(self, llm_service=None):
         self.llm_service = None
-        self._init_llm()
+        if llm_service is not None:
+            self.llm_service = llm_service
+            self._llm_client = getattr(llm_service, 'client', None)
+        else:
+            self._init_llm()
         
         # 领域知识库（可扩展）
         self.domain_knowledge = {
@@ -607,9 +611,13 @@ class IntentDeepParser:
     4. 重述用户意图以验证理解准确性
     """
     
-    def __init__(self):
+    def __init__(self, llm_service=None):
         self.llm_service = None
-        self._init_llm()
+        if llm_service is not None:
+            self.llm_service = llm_service
+            self._llm_client = getattr(llm_service, 'client', None)
+        else:
+            self._init_llm()
     
     def _init_llm(self):
         """初始化LLM服务"""
@@ -947,9 +955,13 @@ class AnalysisStrategyGenerator:
     支持多步复杂推理链
     """
     
-    def __init__(self):
+    def __init__(self, llm_service=None):
         self.llm_service = None
-        self._init_llm()
+        if llm_service is not None:
+            self.llm_service = llm_service
+            self._llm_client = getattr(llm_service, 'client', None)
+        else:
+            self._init_llm()
     
     def _init_llm(self):
         import sys
@@ -957,14 +969,16 @@ class AnalysisStrategyGenerator:
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         if project_root not in sys.path:
             sys.path.insert(0, project_root)
-        
+
         try:
             from services.llm_service import LLMService
             self.llm_service = LLMService()
+            self._llm_client = getattr(self.llm_service, 'client', None)
         except:
             self.llm_service = None
-    
-    def generate(self, data_semantics: DataSemantics, 
+            self._llm_client = None
+
+    def generate(self, data_semantics: DataSemantics,
                 intent: IntentAnalysis) -> AnalysisStrategy:
         """
         生成分析策略
@@ -1419,9 +1433,13 @@ class ResultInterpreter:
     将结构化结果转化为自然语言答案
     """
     
-    def __init__(self):
+    def __init__(self, llm_service=None):
         self.llm_service = None
-        self._init_llm()
+        if llm_service is not None:
+            self.llm_service = llm_service
+            self._llm_client = getattr(llm_service, 'client', None)
+        else:
+            self._init_llm()
     
     def _init_llm(self):
         import sys
@@ -1682,13 +1700,26 @@ class SemanticIntelligenceEngine:
     """
     
     def __init__(self):
-        self.discoverer = DataSemanticDiscoverer()      # Layer 0
-        self.parser = IntentDeepParser()                 # Layer 1
-        self.strategy_gen = AnalysisStrategyGenerator()  # Layer 2
+        # 共享一个LLMService实例，避免重复创建OpenAI client
+        shared_llm = self._create_shared_llm()
+
+        self.discoverer = DataSemanticDiscoverer(llm_service=shared_llm)      # Layer 0
+        self.parser = IntentDeepParser(llm_service=shared_llm)                 # Layer 1
+        self.strategy_gen = AnalysisStrategyGenerator(llm_service=shared_llm)  # Layer 2
         self.executor = IntelligentExecutionEngine()     # Layer 3
-        self.interpreter = ResultInterpreter()           # Layer 4
-        
+        self.interpreter = ResultInterpreter(llm_service=shared_llm)           # Layer 4
+
         logger.info("[Semantic Intelligence Engine v4.0] 初始化完成")
+
+    @staticmethod
+    def _create_shared_llm():
+        """创建共享的LLMService实例"""
+        try:
+            from services.llm_service import LLMService
+            return LLMService()
+        except Exception as e:
+            logger.warning(f"[SemanticEngine] 共享LLM初始化失败: {e}")
+            return None
     
     def analyze(self, raw_data: List[Dict], user_query: str, 
                query_intent: Dict = None, pre_parsed_intent: Dict = None) -> AnalysisResult:

@@ -198,7 +198,7 @@ class SemanticLayer:
             if alias in q_lower:
                 for itype, keywords in self._intent_keywords.items():
                     if canonical in keywords or any(c in k for k in keywords for c in [canonical]):
-                        scores[itype] = scores.get(itye, 0) + 0.5
+                        scores[itype] = scores.get(itype, 0) + 0.5
 
         # Step 3: 选择最高分
         if scores:

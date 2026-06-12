@@ -57,7 +57,7 @@ def get_db_config(connection_name: str) -> Optional[DatabaseConfig]:
 
 def get_all_db_configs() -> Dict[str, DatabaseConfig]:
     configs = {}
-    for name in ['EAM', 'WMS_PROD', 'EKP', 'HISTORIAN']:
+    for name in ['EAM', 'WMS_PROD', 'EKP', 'HISTORIAN', 'DW']:
         cfg = get_db_config(name)
         if cfg and cfg.user and cfg.password:
             configs[name] = cfg
@@ -68,3 +68,4 @@ EAM_CONFIG = get_db_config('EAM')
 WMS_CONFIG = get_db_config('WMS_PROD')
 EKP_CONFIG = get_db_config('EKP')
 HISTORIAN_CONFIG = get_db_config('HISTORIAN')
+DW_CONFIG = get_db_config('DW')

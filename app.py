@@ -130,22 +130,23 @@ def _parse_fmcs_time_range(query: str, start_date: str, end_date: str, days: int
 @app.route("/api/fmcs/query", methods=["POST", "GET"])
 def fmcs_query():
     """
-    FMCS设备数据智能查询接口
+    FMCS/SCADA 多场景智能查询接口
 
-    支持自然语言查询，自动匹配设备TagName，返回时序数据+统计+图表配置
+    支持分析类型：
+      - raw: 原始时序数据查看
+      - threshold: 阈值超标分析（超标时段、持续时长）
+      - comparison: 多设备对比
+      - trend: 趋势分析（变化率、异常点）
+      - aggregation: 聚合统计（按小时/天 avg/max/min）
 
     调用方式:
-    GET  /api/fmcs/query?q=纯化间温度&days=1
-    POST /api/fmcs/query  Body: {"query": "A1S115温度", "days": 3}
-
-    返回:
-    {
-      "success": true,
-      "devices": [{"tagname": "A1S115_TT.PV", "cn_desc": "...", "measure_type": "TT", ...}],
-      "data": [{"datetime": "...", "value": 24.5, "tagname": "A1S115_TT.PV"}, ...],
-      "stats": {"current": 24.5, "max": 25.1, "min": 23.8, "avg": 24.3},
-      "chart_config": {...},
-      "measure_info": {"label": "温度", "unit": "°C", "color": "#4fc3f7"}
+    POST /api/fmcs/query  Body: {
+        "query": "纯化间温度超过25度持续多久",
+        "days": 3,
+        "analysis_type": "threshold",   // 可选，默认自动推断
+        "threshold": 25,                // threshold分析时必传
+        "threshold_operator": ">",      // 可选，默认">"
+        "agg_interval": "hour"          // aggregation分析时可选，"hour"|"day"
     }
     """
     try:
@@ -155,6 +156,10 @@ def fmcs_query():
             tagname = (request.args.get("tagname") or "").strip()
             start_date = (request.args.get("start_date") or "").strip()
             end_date = (request.args.get("end_date") or "").strip()
+            analysis_type = (request.args.get("analysis_type") or "").strip()
+            threshold = request.args.get("threshold", type=float)
+            threshold_operator = (request.args.get("threshold_operator") or ">").strip()
+            agg_interval = (request.args.get("agg_interval") or "hour").strip()
         else:
             data = request.get_json(silent=True) or {}
             query = (data.get("query") or "").strip()
@@ -162,159 +167,184 @@ def fmcs_query():
             tagname = (data.get("tagname") or "").strip()
             start_date = (data.get("start_date") or "").strip()
             end_date = (data.get("end_date") or "").strip()
+            analysis_type = (data.get("analysis_type") or "").strip()
+            threshold = data.get("threshold")
+            threshold_operator = (data.get("threshold_operator") or ">").strip()
+            agg_interval = (data.get("agg_interval") or "hour").strip()
 
         if not query and not tagname:
             return jsonify({"success": False, "error": "请提供查询内容(query)或设备名(tagname)"}), 400
 
         from utils.fmcs_registry import get_fmcs_registry
         from utils.db_config import HISTORIAN_CONFIG
-        import pymssql
+        from services.scada_analyzer import SCADAAnalyzer
         from datetime import datetime, timedelta
 
         registry = get_fmcs_registry()
+        analyzer = SCADAAnalyzer(HISTORIAN_CONFIG)
+
+        # 解析查询意图
+        parsed = analyzer.parse_scada_query(query)
+
+        # 如果前端指定了 analysis_type，覆盖自动推断的结果
+        if analysis_type:
+            parsed["analysis_type"] = analysis_type
+        if threshold is not None:
+            parsed["threshold"] = threshold
+            parsed["analysis_type"] = "threshold"
+        if threshold_operator:
+            parsed["threshold_operator"] = threshold_operator
 
         # 匹配设备
-        if tagname:
-            # 精确指定TagName
-            device = registry.get_device(tagname)
-            matched_devices = [device] if device else [{'tagname': tagname, 'measure_type': 'PV', 'cn_desc': tagname}]
-        else:
-            # 自然语言搜索
-            matched_devices = registry.search(query, top_k=5)
+        tagnames = parsed.get("tagnames", [])
+        device_info = parsed.get("device_info", {})
 
-        if not matched_devices:
+        if tagname and not tagnames:
+            device = registry.get_device(tagname)
+            if device:
+                tagnames = [tagname]
+                measure_info = registry.get_measure_type_info(device.get('measure_type', 'PV'))
+                device_info[tagname] = {
+                    "tagname": tagname,
+                    "cn_desc": device.get('cn_desc', tagname),
+                    "room_code": device.get('room_code', ''),
+                    "room_name": device.get('room_name', ''),
+                    "measure_type": device.get('measure_type', 'PV'),
+                    "measure_label": measure_info.get('label', ''),
+                    "unit": measure_info.get('unit', ''),
+                    "color": measure_info.get('color', '#4fc3f7'),
+                }
+
+        if not tagnames:
             return jsonify({
                 "success": False,
                 "error": f"未找到匹配的设备数据点: {query}",
                 "suggestion": "试试输入房间号(如A1S115)或设备描述(如纯化间温度)"
             })
 
-        # 取最佳匹配
-        best_device = matched_devices[0]
-        best_tagname = best_device['tagname']
-        measure_type = best_device.get('measure_type', 'PV')
-        measure_info = registry.get_measure_type_info(measure_type)
-
-        # 计算时间范围 - 支持自然语言时间表达
+        # 计算时间范围
         now = datetime.now()
-        start_date, end_date = _parse_fmcs_time_range(query, start_date, end_date, days, now)
-        logger.info(f"[FMCS] 时间解析: query='{query}', start={start_date}, end={end_date}")
+        time_range = parsed.get("time_range", {})
+        if not start_date:
+            start_date = time_range.get("start_date", (now - timedelta(days=days)).strftime("%Y-%m-%d 00:00:00"))
+        if not end_date:
+            end_date = time_range.get("end_date", now.strftime("%Y-%m-%d %H:%M:%S"))
 
-        # 查询Historian数据库
+        logger.info(f"[FMCS] 查询: '{query}', 分析类型: {parsed['analysis_type']}, "
+                     f"设备: {tagnames}, 时间: {start_date} ~ {end_date}")
+
+        # 查询Historian时序数据
         if not HISTORIAN_CONFIG:
             return jsonify({"success": False, "error": "Historian数据库未配置"}), 500
 
-        sql = """
-        SELECT datetime, value, tagname FROM History
-        WHERE TagName = %s
-          AND wwTimeZone = 'China Standard Time'
-          AND wwResolution = '60000'
-          AND wwRetrievalMode = 'Cyclic'
-          AND DateTime >= %s AND DateTime <= %s
-        ORDER BY datetime ASC
-        """
+        resolution = parsed.get("resolution", 60000)
+        multi_data = analyzer.fetch_timeseries(tagnames, start_date, end_date, resolution)
 
-        kwargs = HISTORIAN_CONFIG.to_pymssql_kwargs()
-        kwargs['tds_version'] = '7.0'
-        conn = pymssql.connect(**kwargs)
-        cursor = conn.cursor()
-        cursor.execute(sql, (best_tagname, start_date, end_date))
-        columns = [desc[0] for desc in cursor.description]
-        rows = cursor.fetchall()
-        conn.close()
+        if not multi_data or all(len(v) == 0 for v in multi_data.values()):
+            return jsonify({
+                "success": True,
+                "query": query,
+                "analysis_type": parsed["analysis_type"],
+                "matched_devices": [{"tagname": tn, **device_info.get(tn, {})} for tn in tagnames],
+                "start_date": start_date,
+                "end_date": end_date,
+                "data": {},
+                "stats": {},
+                "analysis_result": {},
+                "chart_config": {},
+                "measure_info": device_info.get(tagnames[0], {}) if tagnames else {},
+            })
 
-        data = []
-        for row in rows:
-            row_dict = dict(zip(columns, row))
-            if row_dict.get("datetime"):
-                dt = row_dict["datetime"]
-                row_dict["datetime"] = dt.strftime("%Y-%m-%d %H:%M:%S") if hasattr(dt, "strftime") else str(dt)
-            if row_dict.get("value") is not None:
-                row_dict["value"] = round(float(row_dict["value"]), 4)
-            data.append(row_dict)
-
-        # 计算统计
-        values = [d['value'] for d in data if d.get('value') is not None]
-        stats = {}
-        if values:
-            stats = {
-                'current': round(values[-1], 2),
-                'max': round(max(values), 2),
-                'min': round(min(values), 2),
-                'avg': round(sum(values) / len(values), 2),
-                'count': len(values),
-            }
-
-        # 构建ECharts配置
+        # 根据分析类型执行不同分析
+        atype = parsed["analysis_type"]
+        analysis_result = {}
         chart_config = {}
-        if values:
-            times = [d['datetime'][5:16] if d.get('datetime') else '' for d in data]
-            chart_config = {
-                'backgroundColor': 'transparent',
-                'tooltip': {
-                    'trigger': 'axis',
-                    'formatter': f"{{p0}}<br/>{{{{p0}}.marker}} {best_tagname}: <b>{{{{p0}}.value}}{measure_info['unit']}</b>"
-                },
-                'grid': {'left': 55, 'right': 20, 'top': 25, 'bottom': 50},
-                'xAxis': {
-                    'type': 'category', 'data': times,
-                    'axisLabel': {'fontSize': 10, 'color': '#90a4ae', 'rotate': 30 if len(times) > 100 else 0},
-                    'axisLine': {'lineStyle': {'color': '#2a4a6a'}},
-                },
-                'yAxis': {
-                    'type': 'value', 'name': measure_info['unit'],
-                    'nameTextStyle': {'color': '#90a4ae', 'fontSize': 11},
-                    'axisLabel': {'color': '#90a4ae', 'fontSize': 10},
-                    'splitLine': {'lineStyle': {'color': '#1e3a5f', 'type': 'dashed'}},
-                },
-                'series': [{
-                    'type': 'line', 'data': values, 'smooth': True, 'symbol': 'none',
-                    'lineStyle': {'color': measure_info['color'], 'width': 2},
-                    'areaStyle': {
-                        'color': {
-                            'type': 'linear', 'x': 0, 'y': 0, 'x2': 0, 'y2': 1,
-                            'colorStops': [
-                                {'offset': 0, 'color': measure_info['area_color']},
-                                {'offset': 1, 'color': measure_info['area_color'].replace('0.3', '0.02').replace('0.02)', '0.02)')}
-                            ]
-                        }
-                    },
-                    'markLine': {
-                        'silent': True,
-                        'data': [
-                            {'type': 'average', 'name': '平均', 'lineStyle': {'color': '#ffb74d', 'type': 'dashed'}},
-                        ]
-                    }
-                }],
-                'dataZoom': [{'type': 'inside', 'start': 0, 'end': 100}],
+        stats = {}
+
+        if atype == "threshold":
+            # 阈值超标分析
+            thresh_val = parsed.get("threshold", 25.0)
+            thresh_op = parsed.get("threshold_operator", ">")
+            for tn in tagnames:
+                data_points = multi_data.get(tn, [])
+                result = analyzer.analyze_threshold(data_points, thresh_val, thresh_op)
+                analysis_result[tn] = result
+            chart_config = analyzer.build_chart_config(
+                multi_data, device_info, analysis_type="threshold",
+                threshold_info={"threshold": thresh_val, "operator": thresh_op}
+            )
+            # 统计汇总
+            all_periods = []
+            for tn, r in analysis_result.items():
+                all_periods.extend(r.get("periods", []))
+            total_duration = sum(p["duration_min"] for p in all_periods)
+            max_duration = max((p["duration_min"] for p in all_periods), default=0)
+            stats = {
+                "exceed_count": len(all_periods),
+                "total_duration_min": round(total_duration, 1),
+                "max_duration_min": round(max_duration, 1),
+                "threshold": thresh_val,
+                "threshold_operator": thresh_op,
             }
+
+        elif atype == "comparison":
+            # 多设备对比
+            analysis_result = analyzer.analyze_comparison(multi_data, device_info)
+            chart_config = analyzer.build_chart_config(multi_data, device_info, analysis_type="comparison")
+            stats = analysis_result.get("devices", {})
+
+        elif atype == "trend":
+            # 趋势分析
+            for tn in tagnames:
+                data_points = multi_data.get(tn, [])
+                result = analyzer.analyze_trend(data_points)
+                analysis_result[tn] = result
+            chart_config = analyzer.build_chart_config(multi_data, device_info, analysis_type="trend")
+
+        elif atype == "aggregation":
+            # 聚合统计
+            for tn in tagnames:
+                data_points = multi_data.get(tn, [])
+                result = analyzer.analyze_aggregation(data_points, interval=agg_interval)
+                analysis_result[tn] = result
+            chart_config = analyzer.build_chart_config(
+                multi_data, device_info, analysis_type="aggregation",
+                aggregation_data=analysis_result
+            )
+
+        else:
+            # raw: 原始时序查看
+            for tn in tagnames:
+                values = [p["value"] for p in multi_data.get(tn, [])]
+                if values:
+                    stats[tn] = {
+                        "current": round(values[-1], 2),
+                        "max": round(max(values), 2),
+                        "min": round(min(values), 2),
+                        "avg": round(sum(values) / len(values), 2),
+                        "count": len(values),
+                    }
+            chart_config = analyzer.build_chart_config(multi_data, device_info, analysis_type="raw")
+
+        # 构建返回结果
+        best_tagname = tagnames[0]
+        best_device_info = device_info.get(best_tagname, {})
 
         return jsonify({
-            'success': True,
-            'query': query,
-            'matched_device': {
-                'tagname': best_tagname,
-                'cn_desc': best_device.get('cn_desc', ''),
-                'measure_type': measure_type,
-                'measure_label': measure_info['label'],
-                'unit': measure_info['unit'],
-                'room_code': best_device.get('room_code', ''),
-                'room_name': best_device.get('room_name', ''),
-            },
-            'all_matched': [{
-                'tagname': d['tagname'],
-                'cn_desc': d.get('cn_desc', ''),
-                'measure_type': d.get('measure_type', 'PV'),
-                'measure_label': registry.get_measure_type_info(d.get('measure_type', 'PV'))['label'],
-                'match_score': d.get('match_score', 0),
-            } for d in matched_devices[:5]],
-            'start_date': start_date,
-            'end_date': end_date,
-            'data_count': len(data),
-            'data': data,
-            'stats': stats,
-            'chart_config': chart_config,
-            'measure_info': measure_info,
+            "success": True,
+            "query": query,
+            "analysis_type": atype,
+            "matched_devices": [{"tagname": tn, **device_info.get(tn, {})} for tn in tagnames],
+            "start_date": start_date,
+            "end_date": end_date,
+            "data": multi_data,
+            "stats": stats,
+            "analysis_result": analysis_result,
+            "chart_config": chart_config,
+            "measure_info": best_device_info,
+            "threshold": parsed.get("threshold"),
+            "threshold_operator": parsed.get("threshold_operator", ">"),
+            "agg_interval": agg_interval,
         })
 
     except Exception as e:
@@ -525,6 +555,15 @@ if __name__ == "__main__":
    接口: http://localhost:5000/api/agent/query
 ====================================================
     """)
+
+    # 启动ETL调度器（每小时自动刷新数仓宽表）
+    try:
+        from etl.etl_scheduler import start_scheduler
+        start_scheduler(app)
+        logger.info("ETL调度器已启动")
+    except Exception as e:
+        logger.warning(f"ETL调度器启动失败（不影响主服务）: {e}")
+
     app.run(
         host=os.getenv("FLASK_HOST", "0.0.0.0"),
         port=int(os.getenv("FLASK_PORT", "5000")),
