@@ -312,6 +312,19 @@ def fmcs_query():
                 aggregation_data=analysis_result
             )
 
+        elif atype == "anomaly":
+            # 异常检测
+            anomaly_data = {}
+            for tn in tagnames:
+                data_points = multi_data.get(tn, [])
+                result = analyzer.analyze_anomaly(data_points)
+                analysis_result[tn] = result
+                anomaly_data[tn] = result
+            chart_config = analyzer.build_chart_config(
+                multi_data, device_info, analysis_type="anomaly",
+                anomaly_data=anomaly_data
+            )
+
         else:
             # raw: 原始时序查看
             for tn in tagnames:

@@ -824,7 +824,7 @@ async function callAgentStream(query, messageId) {
                     const saChartId = `scada_agent_chart_${messageId}_${Date.now()}`;
 
                     // 分析类型标签
-                    const typeLabels = {raw:'时序监控',threshold:'阈值分析',comparison:'对比分析',trend:'趋势分析',aggregation:'聚合统计'};
+                    const typeLabels = {raw:'时序监控',threshold:'阈值分析',comparison:'对比分析',trend:'趋势分析',aggregation:'聚合统计',anomaly:'异常检测'};
                     const typeBadge = `<span style="display:inline-block;background:#1e3a5f;color:#4fc3f7;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px;">${typeLabels[saType] || saType}</span>`;
 
                     // 设备名称
@@ -896,6 +896,36 @@ async function callAgentStream(query, messageId) {
                             </div></div>`;
                     }
 
+                    // 异常检测卡片
+                    if (saType === 'anomaly') {
+                        const an = saResult[firstTag] || saResult;
+                        const anomalies = an.anomalies || {};
+                        const totalEvents = an.total_anomaly_events || 0;
+                        const detectors = an.detectors_used || [];
+                        const detectorLabels = {persist:'持续异常',level_shift:'阶跃突变',volatility:'波动异常',seasonal:'季节性异常'};
+                        let anomalyCards = '';
+                        for (const [dtype, events] of Object.entries(anomalies)) {
+                            anomalyCards += `<div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;min-width:140px;">
+                                <div style="font-size:13px;font-weight:600;color:#ef5350;">${detectorLabels[dtype] || dtype}</div>
+                                <div style="font-size:20px;font-weight:700;margin-top:4px;">${events.length}</div>
+                                <div style="font-size:11px;color:#b0bec5;">事件数</div>
+                            </div>`;
+                        }
+                        if (anomalyCards) {
+                            saHtml += `<div style="display:flex;gap:8px;overflow-x:auto;margin:8px 0;">${anomalyCards}</div>`;
+                        }
+                        // 异常事件明细
+                        for (const [dtype, events] of Object.entries(anomalies)) {
+                            if (events.length > 0) {
+                                saHtml += `<div style="margin:6px 0;"><div style="font-size:12px;font-weight:600;color:#ef5350;">${detectorLabels[dtype] || dtype}事件:</div>`;
+                                for (const ev of events.slice(0, 5)) {
+                                    saHtml += `<div style="font-size:11px;color:#b0bec5;padding:2px 8px;">${ev.start} ~ ${ev.end} (${ev.duration_min}分钟)</div>`;
+                                }
+                                saHtml += `</div>`;
+                            }
+                        }
+                    }
+
                     // 图表
                     if (saChart && Object.keys(saChart).length > 0) {
                         saHtml += `<div id="${saChartId}" style="width:100%;height:300px;background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;margin-top:8px;"></div>`;
@@ -918,6 +948,93 @@ async function callAgentStream(query, messageId) {
                                 if (el && typeof echarts !== 'undefined') {
                                     const chart = echarts.init(el);
                                     chart.setOption(saChart, true);
+                                }
+                            }, 150);
+                        }
+                    }
+                } else if (event.type === 'workorder_analysis') {
+                    // 工单时序深度分析事件（基于ADTK）
+                    const waType = event.analysis_type || 'raw';
+                    const waResult = event.analysis_result || {};
+                    const waChart = event.chart_config || {};
+                    const waSummary = event.summary || '';
+                    const waColLabel = event.col_label || '';
+                    const waChartId = `wo_ts_chart_${messageId}_${Date.now()}`;
+
+                    const typeLabels = {raw:'时序查看',threshold:'阈值分析',comparison:'对比分析',trend:'趋势分析',aggregation:'聚合统计',anomaly:'异常检测'};
+                    const typeBadge = `<span style="display:inline-block;background:#1e3a5f;color:#4fc3f7;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px;">${typeLabels[waType] || waType}</span>`;
+
+                    let waHtml = `<div class="agent-step" style="margin-top:8px;">
+                        <div class="chain-step-title">📋 ${waColLabel}${typeBadge}</div>`;
+
+                    // 阈值分析卡片
+                    if (waType === 'threshold') {
+                        const exceedCount = waResult.exceed_count || 0;
+                        const totalMin = waResult.total_duration_min || 0;
+                        const maxMin = waResult.max_duration_min || 0;
+                        waHtml += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0;">
+                            <div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;text-align:center;">
+                                <div style="font-size:11px;color:#90a4ae;">超标次数</div>
+                                <div style="font-size:22px;font-weight:700;color:#ef5350;">${exceedCount}</div>
+                            </div>
+                            <div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;text-align:center;">
+                                <div style="font-size:11px;color:#90a4ae;">累计时长</div>
+                                <div style="font-size:22px;font-weight:700;color:#ffb74d;">${totalMin}<span style="font-size:11px;color:#90a4ae;">分钟</span></div>
+                            </div>
+                            <div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;text-align:center;">
+                                <div style="font-size:11px;color:#90a4ae;">最长持续</div>
+                                <div style="font-size:22px;font-weight:700;color:#ff7043;">${maxMin}<span style="font-size:11px;color:#90a4ae;">分钟</span></div>
+                            </div>
+                        </div>`;
+                    }
+
+                    // 趋势分析卡片
+                    if (waType === 'trend') {
+                        const trendIcon = waResult.trend === 'rising' ? '📈' : waResult.trend === 'declining' ? '📉' : '➡️';
+                        const trendLabel = waResult.trend === 'rising' ? '上升' : waResult.trend === 'declining' ? '下降' : '稳定';
+                        waHtml += `<div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;margin:8px 0;">
+                            <div style="font-size:20px;font-weight:700;">${trendIcon} ${trendLabel}</div>
+                            <div style="font-size:11px;color:#b0bec5;margin-top:4px;">
+                                总变化: ${waResult.total_change?.toFixed(2) ?? '-'} | 变化率: ${waResult.rate_per_hour?.toFixed(4) ?? '-'}/h
+                            </div></div>`;
+                    }
+
+                    // 异常检测卡片
+                    if (waType === 'anomaly') {
+                        const anomalies = waResult.anomalies || {};
+                        const detectorLabels = {persist:'持续异常',level_shift:'阶跃突变',volatility:'波动异常',seasonal:'季节性异常'};
+                        let anomalyCards = '';
+                        for (const [dtype, events] of Object.entries(anomalies)) {
+                            anomalyCards += `<div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;min-width:120px;">
+                                <div style="font-size:12px;font-weight:600;color:#ef5350;">${detectorLabels[dtype] || dtype}</div>
+                                <div style="font-size:20px;font-weight:700;margin-top:4px;">${events.length}</div>
+                                <div style="font-size:11px;color:#90a4ae;">事件数</div>
+                            </div>`;
+                        }
+                        if (anomalyCards) waHtml += `<div style="display:flex;gap:8px;overflow-x:auto;margin:8px 0;">${anomalyCards}</div>`;
+                    }
+
+                    // 图表
+                    if (waChart && Object.keys(waChart).length > 0) {
+                        waHtml += `<div id="${waChartId}" style="width:100%;height:280px;background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;margin-top:8px;"></div>`;
+                    }
+
+                    // 摘要
+                    if (waSummary) {
+                        waHtml += `<div style="font-size:12px;color:#b0bec5;margin-top:8px;padding:6px 8px;background:#1a2a3a;border-radius:4px;">${escapeHtml(waSummary)}</div>`;
+                    }
+
+                    waHtml += `</div>`;
+
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', waHtml);
+                        scrollToBottom();
+                        if (waChart && Object.keys(waChart).length > 0) {
+                            setTimeout(() => {
+                                const el = document.getElementById(waChartId);
+                                if (el && typeof echarts !== 'undefined') {
+                                    const chart = echarts.init(el);
+                                    chart.setOption(waChart, true);
                                 }
                             }, 150);
                         }
@@ -1498,7 +1615,7 @@ function detectFMCSIntent(query) {
     else if (q.includes('今天') || q.includes('今日') || q.includes('当天')) days = 1;
     else if (q.includes('上周') || q.includes('上星期')) days = 14;
 
-    // 解析分析类型（优先级：threshold > comparison > trend > aggregation > raw）
+    // 解析分析类型（优先级：threshold > anomaly > comparison > trend > aggregation > raw）
     let analysis_type = 'raw';
     let threshold = null;
     let threshold_operator = '>';
@@ -1528,17 +1645,22 @@ function detectFMCSIntent(query) {
         analysis_type = 'threshold';
     }
 
-    // 2. 对比分析
+    // 2. 异常检测
+    if (analysis_type === 'raw' && /异常|突变|阶跃|波动异常|不正常/.test(q)) {
+        analysis_type = 'anomaly';
+    }
+
+    // 3. 对比分析
     if (analysis_type === 'raw' && /对比|比较|vs|和.*比|与.*比|之间/.test(q)) {
         analysis_type = 'comparison';
     }
 
-    // 3. 趋势分析
+    // 4. 趋势分析
     if (analysis_type === 'raw' && /趋势|变化|走势|波动|上升|下降/.test(q)) {
         analysis_type = 'trend';
     }
 
-    // 4. 聚合统计
+    // 5. 聚合统计
     if (analysis_type === 'raw' && /平均|均值|每天|每小时|日均|周均|月均|汇总|统计/.test(q)) {
         analysis_type = 'aggregation';
         if (/每天|日均|日均值|按天/.test(q)) agg_interval = 'day';
@@ -1622,7 +1744,8 @@ async function handleFMCSQuery(intent, messageId) {
             threshold: '阈值分析',
             comparison: '对比分析',
             trend: '趋势分析',
-            aggregation: '聚合统计'
+            aggregation: '聚合统计',
+            anomaly: '异常检测'
         };
         const typeBadge = `<span style="display:inline-block;background:#1e3a5f;color:#4fc3f7;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px;">${typeLabels[atype] || atype}</span>`;
 
@@ -1753,6 +1876,45 @@ async function handleFMCSQuery(intent, messageId) {
             }
             if (aggTableHtml) {
                 detailHtml = `<div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;margin-top:8px;">${aggTableHtml}</div>`;
+            }
+
+        } else if (atype === 'anomaly') {
+            // 异常检测
+            const detectorLabels = {persist:'持续异常',level_shift:'阶跃突变',volatility:'波动异常',seasonal:'季节性异常'};
+            let anomalyCards = '';
+            for (const [tn, ar] of Object.entries(analysisResult)) {
+                const anomalies = ar.anomalies || {};
+                const dLabel = matchedDevices.find(d => d.tagname === tn)?.room_name || tn;
+                for (const [dtype, events] of Object.entries(anomalies)) {
+                    anomalyCards += `<div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;min-width:140px;">
+                        <div style="font-size:11px;color:#4fc3f7;font-weight:600;">${dLabel}</div>
+                        <div style="font-size:13px;font-weight:600;color:#ef5350;margin-top:4px;">${detectorLabels[dtype] || dtype}</div>
+                        <div style="font-size:22px;font-weight:700;margin-top:2px;">${events.length}<span style="font-size:12px;color:#90a4ae;">事件</span></div>
+                    </div>`;
+                }
+            }
+            if (anomalyCards) {
+                statsHtml = `<div style="display:flex;gap:8px;overflow-x:auto;margin:10px 0;">${anomalyCards}</div>`;
+            }
+            // 异常事件明细
+            let anomalyDetail = '';
+            for (const [tn, ar] of Object.entries(analysisResult)) {
+                const anomalies = ar.anomalies || {};
+                const dLabel = matchedDevices.find(d => d.tagname === tn)?.room_name || tn;
+                for (const [dtype, events] of Object.entries(anomalies)) {
+                    if (events.length === 0) continue;
+                    anomalyDetail += `<div style="margin-top:6px;">
+                        <div style="font-size:12px;color:#ef5350;font-weight:600;">${dLabel} · ${detectorLabels[dtype] || dtype}</div>`;
+                    for (const ev of events.slice(0, 10)) {
+                        anomalyDetail += `<div style="font-size:11px;color:#b0bec5;padding:2px 8px;">${ev.start} ~ ${ev.end} (${ev.duration_min}分钟)${ev.max_value ? ' 峰值:' + ev.max_value + unit : ''}</div>`;
+                    }
+                    anomalyDetail += `</div>`;
+                }
+            }
+            if (anomalyDetail) {
+                detailHtml = `<div style="background:#1a2a3a;border:1px solid #1e3a5f;border-radius:6px;padding:10px;margin-top:8px;">
+                    <div style="font-size:12px;color:#90a4ae;font-weight:600;margin-bottom:4px;">异常事件明细</div>
+                    ${anomalyDetail}</div>`;
             }
 
         } else {

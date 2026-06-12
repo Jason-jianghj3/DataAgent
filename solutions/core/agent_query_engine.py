@@ -19,6 +19,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import re
+from datetime import datetime
 from utils.logger import logger
 from utils.serialization import safe_json_dumps, convert_rows_types
 from utils.db_executor import execute_query
@@ -500,80 +501,43 @@ ORDER BY dept_code
 | SCADA温度/湿度/压差 | dw_scada_hourly_agg | DW |
 | SCADA超标事件 | dw_scada_threshold_event | DW |
 
-⚠️ 关键：编写SQL时，必须优先使用上面提供的模板，只修改WHERE条件部分（部门/时间筛选），不要修改SELECT/GROUP BY/CTE结构！
+⚠️ 关键：工单查询必须使用DW宽表（connection_name="DW"），宽表已预计算ProcessDays/ProcessHours/ProcessTimeCategory，禁止使用CTE或JOIN原始表！
 
-CTE模板中只能使用以下字段：
-- ATWORKFLOWRECORDS表: RECCODE, RECFLOCODE, CREATEDBY, LASTSAVED, RECFLONODE, RECFROMSTATUS
-- ATUSERS表: USRCODE, USRDESC, USRMRC, USRMRCDESC
-- ATWORKFLOW表: FLOCODE, FLODESC, FLOENTITYDESC
-- 计算字段(CTE内): NewNode, CreateTime, ApprovalTime, ProcessDays
+DW宽表查询示例（直接简单SELECT，无需CTE/JOIN）：
 
-各部门工单处理情况（与帆软报表口径一致，必须用此模板）：
+各部门工单处理情况：
 ```sql
-WITH Ordered AS (
-    SELECT RECCODE, RECFLOCODE, CREATEDBY, LASTSAVED,
-      ROW_NUMBER() OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY LASTSAVED, RECCODE) AS NewNode
-    FROM ATWORKFLOWRECORDS
-),
-ProcessTime AS (
-    SELECT RECCODE, RECFLOCODE, CREATEDBY,
-      LASTSAVED AS ApprovalTime,
-      LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) AS CreateTime,
-      CASE WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) IS NOT NULL
-        THEN ROUND(CAST(DATEDIFF(MINUTE, LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode), LASTSAVED) AS FLOAT) / 1440.0, 2)
-        ELSE NULL END AS ProcessDays
-    FROM Ordered
-),
-data_all AS (
-    SELECT RECCODE, RECFLOCODE, CREATEDBY, CreateTime, ApprovalTime, ProcessDays
-    FROM ProcessTime WHERE CreateTime IS NOT NULL AND ProcessDays > 0
-)
-SELECT AU.USRMRC AS 部门代码, AU.USRMRCDESC AS 部门名称,
-       COUNT(DISTINCT CONCAT(da.RECCODE, '|', da.RECFLOCODE)) AS 工单数量,
-       ROUND(SUM(da.ProcessDays), 3) AS 总处理天数,
-       ROUND(AVG(da.ProcessDays), 3) AS 平均处理天数,
-       COUNT(DISTINCT da.CREATEDBY) AS 处理人数
-FROM data_all da
-LEFT JOIN ATUSERS AU ON da.CREATEDBY = AU.USRCODE
-LEFT JOIN ATWORKFLOW AF ON da.RECFLOCODE = AF.FLOCODE
-WHERE AU.USRDESC IS NOT NULL AND AU.USRMRC IS NOT NULL AND AU.USRMRC <> '*'
-  -- 仅当用户提到时间时才加: AND da.ApprovalTime BETWEEN '{example_start}' AND '{example_end}'
-  -- 仅当用户提到部门时才加: AND AU.USRMRC = 'CI'
-GROUP BY AU.USRMRC, AU.USRMRCDESC
+SELECT DEPT_CODE AS 部门代码, DEPT_NAME AS 部门名称,
+       COUNT(DISTINCT CONCAT(RECCODE, '|', RECFLOCODE)) AS 工单数量,
+       ROUND(SUM(ProcessDays), 3) AS 总处理天数,
+       ROUND(AVG(ProcessDays), 3) AS 平均处理天数,
+       COUNT(DISTINCT CREATEDBY) AS 处理人数
+FROM dw_workorder_detail
+WHERE DEPT_CODE IN ('CI','OM')
+  AND ApprovalTime BETWEEN '2025-05-01' AND '2025-05-31 23:59:59'
+GROUP BY DEPT_CODE, DEPT_NAME
 ORDER BY 平均处理天数 ASC
 ```
 
-单个部门工单处理耗时明细：
+单个部门员工工单处理明细：
 ```sql
-WITH Ordered AS (
-    SELECT RECCODE, RECFLOCODE, CREATEDBY, LASTSAVED,
-      ROW_NUMBER() OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY LASTSAVED, RECCODE) AS NewNode
-    FROM ATWORKFLOWRECORDS
-),
-ProcessTime AS (
-    SELECT RECCODE, RECFLOCODE, CREATEDBY,
-      LASTSAVED AS ApprovalTime,
-      LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) AS CreateTime,
-      CASE WHEN LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode) IS NOT NULL
-        THEN ROUND(CAST(DATEDIFF(MINUTE, LAG(LASTSAVED) OVER (PARTITION BY RECCODE, RECFLOCODE ORDER BY NewNode), LASTSAVED) AS FLOAT) / 1440.0, 2)
-        ELSE NULL END AS ProcessDays
-    FROM Ordered
-),
-data_all AS (
-    SELECT RECCODE, RECFLOCODE, CREATEDBY, ApprovalTime, CreateTime, ProcessDays
-    FROM ProcessTime WHERE CreateTime IS NOT NULL AND ProcessDays > 0
-)
-SELECT au.USRDESC AS 员工姓名,
-       COUNT(DISTINCT CONCAT(da.RECCODE, '|', da.RECFLOCODE)) AS 工单数量,
-       ROUND(AVG(da.ProcessDays), 3) AS 平均处理天数
-FROM data_all da
-LEFT JOIN ATUSERS au ON da.CREATEDBY = au.USRCODE
-WHERE au.USRDESC IS NOT NULL AND au.USRMRC IS NOT NULL AND au.USRMRC <> '*'
-  AND au.USRMRC = 'CI'
-  -- 仅当用户提到时间时才加: AND da.ApprovalTime BETWEEN '{example_start}' AND '{example_end}'
-GROUP BY au.USRDESC
+SELECT EMPLOYEE_NAME AS 员工姓名,
+       COUNT(DISTINCT CONCAT(RECCODE, '|', RECFLOCODE)) AS 工单数量,
+       ROUND(AVG(ProcessDays), 3) AS 平均处理天数
+FROM dw_workorder_detail
+WHERE DEPT_CODE = 'CI'
+  AND ApprovalTime BETWEEN '2025-05-01' AND '2025-05-31 23:59:59'
+GROUP BY EMPLOYEE_NAME
 ORDER BY 平均处理天数 ASC
 ```
+
+⚠️ 重要规则：
+- 工单去重计数必须用 COUNT(DISTINCT CONCAT(RECCODE, '|', RECFLOCODE))
+- 时间字段用 ApprovalTime（节点结束时间），不用 LASTSAVED
+- 员工字段用 EMPLOYEE_NAME，不用 CREATEDBY 或 USRDESC
+- 部门筛选用 DEPT_CODE IN ('CI','OM')
+- 禁止查询原始表（ATWORKFLOWRECORDS/ATUSERS/ATWORKFLOW），必须查DW宽表
+- 禁止使用CTE/WITH子句，DW宽表已预计算所有字段
 
 {sql_examples}
 """
@@ -1309,6 +1273,10 @@ ORDER BY 平均处理天数 ASC"""
                     auto_chart = self._auto_generate_chart(data, self._current_user_query or "")
                     if auto_chart:
                         yield auto_chart
+                    # 工单时序数据深度分析
+                    ts_event = self._try_timeseries_analysis(data, self._current_user_query or "")
+                    if ts_event:
+                        yield ts_event
                 data_summary = safe_json_dumps(data[:50], ensure_ascii=False)
                 if len(data) > 50:
                     data_summary += f"\n... (共{len(data)}条，仅展示前50条)"
@@ -1323,11 +1291,11 @@ ORDER BY 平均处理天数 ASC"""
             connection_name = tool_args.get("connection_name", "DW")
 
             # 时间范围校验与修正
-            sql = self._fix_time_range(sql, self._current_user_query)
+            sql = self._fix_time_range(sql, self._current_user_query, connection_name=connection_name)
             # 工单计数逻辑校验与修正
             sql = self._fix_count_logic(sql)
             # 员工分组校验与修正
-            sql = self._fix_group_by_for_employee(sql, self._current_user_query)
+            sql = self._fix_group_by_for_employee(sql, self._current_user_query, connection_name=connection_name)
 
             yield {"type": "sql", "sql": sql, "step": step}
 
@@ -1605,6 +1573,7 @@ ORDER BY 平均处理天数 ASC"""
         - 有1个分类维度+1-3个数值列 → 柱状图
         - 有1个分类维度+1个数值列且分类数<=8 → 饼图
         - 有时间维度+1-3个数值列 → 折线图
+        - 工单时序数据 → 额外调用TimeSeriesAnalyzer做ADTK深度分析
         """
         if not data or len(data) < 2:
             return None
@@ -1700,6 +1669,240 @@ ORDER BY 平均处理天数 ASC"""
             }
 
         return {"type": "chart", "config": config}
+
+    def _try_timeseries_analysis(self, data: List[Dict], user_query: str) -> Optional[Dict]:
+        """
+        尝试对工单等SQL查询结果做时序深度分析（基于ADTK）
+
+        当数据满足以下条件时触发：
+        1. 数据行数 >= 5（足够做时序分析）
+        2. 存在可识别的时间列和数值列
+        3. 用户查询包含时序分析意图（趋势/异常/阈值/对比/聚合）
+
+        返回: workorder_analysis 事件 Dict 或 None
+        """
+        if not data or len(data) < 5:
+            return None
+
+        # 检测用户是否有时序分析意图
+        analysis_keywords = [
+            '趋势', '变化', '走势', '波动', '上升', '下降',
+            '异常', '突变', '阶跃', '不正常',
+            '超过', '大于', '高于', '低于', '小于', '超标', '超限',
+            '对比', '比较', 'vs',
+            '平均', '均值', '每天', '每小时', '日均', '统计', '汇总',
+            '持续', '时长', '耗时', '效率', '效能',
+        ]
+        has_ts_intent = any(kw in user_query for kw in analysis_keywords)
+        if not has_ts_intent:
+            return None
+
+        # 识别时间列和数值列
+        columns = list(data[0].keys())
+        time_col = None
+        numeric_cols = []
+
+        # 时间列识别
+        time_keywords_in_col = ['时间', '日期', 'date', 'time', 'ApprovalTime', 'CreateTime',
+                                'LASTSAVED', 'hour', 'day', '月', '周', '年']
+        for col in columns:
+            col_lower = col.lower()
+            if any(kw.lower() in col_lower for kw in time_keywords_in_col):
+                # 验证该列确实包含时间值
+                sample_val = str(data[0].get(col, ""))
+                if re.search(r'\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}:\d{2}', sample_val):
+                    time_col = col
+                    break
+
+        if not time_col:
+            return None
+
+        # 数值列识别
+        for col in columns:
+            if col == time_col:
+                continue
+            numeric_count = sum(1 for row in data
+                              if isinstance(row.get(col), (int, float)) and row.get(col) is not None)
+            if numeric_count > len(data) * 0.5:
+                numeric_cols.append(col)
+
+        if not numeric_cols:
+            return None
+
+        # 将SQL行数据转为时序格式 [{datetime, value}, ...]
+        try:
+            from services.scada_analyzer import TimeSeriesAnalyzer
+
+            analyzer = TimeSeriesAnalyzer()
+            primary_col = numeric_cols[0]
+
+            # 转换数据
+            ts_data = []
+            for row in data:
+                dt_val = row.get(time_col)
+                num_val = row.get(primary_col)
+                if dt_val is None or num_val is None:
+                    continue
+                # 格式化datetime
+                dt_str = str(dt_val)
+                if isinstance(dt_val, datetime):
+                    dt_str = dt_val.strftime("%Y-%m-%d %H:%M:%S")
+                # 截断小数秒
+                dt_str = dt_str.split('.')[0]
+                try:
+                    ts_data.append({"datetime": dt_str, "value": float(num_val)})
+                except (ValueError, TypeError):
+                    continue
+
+            if len(ts_data) < 5:
+                return None
+
+            # 判断分析类型
+            analysis_type = "raw"
+            threshold = None
+            threshold_operator = ">"
+
+            # 阈值意图
+            threshold_patterns = [
+                (r'超过\s*(\d+\.?\d*)', '>'),
+                (r'大于\s*(\d+\.?\d*)', '>'),
+                (r'高于\s*(\d+\.?\d*)', '>'),
+                (r'低于\s*(\d+\.?\d*)', '<'),
+                (r'小于\s*(\d+\.?\d*)', '<'),
+            ]
+            for pattern, op in threshold_patterns:
+                m = re.search(pattern, user_query)
+                if m:
+                    threshold = float(m.group(1))
+                    threshold_operator = op
+                    analysis_type = "threshold"
+                    break
+
+            if analysis_type == "raw":
+                if re.search(r'异常|突变|阶跃|波动异常|不正常', user_query):
+                    analysis_type = "anomaly"
+                elif re.search(r'对比|比较|vs', user_query):
+                    analysis_type = "comparison"
+                elif re.search(r'趋势|变化|走势|波动', user_query):
+                    analysis_type = "trend"
+                elif re.search(r'平均|均值|每天|每小时|日均|统计|汇总', user_query):
+                    analysis_type = "aggregation"
+
+            # 执行分析
+            analysis_result = {}
+            chart_config = None
+            summary = ""
+
+            # 构建设备信息（用于图表）
+            col_label = primary_col
+            # 中文列名映射
+            col_name_map = {
+                'order_count': '工单数量', 'avg_process_days': '平均处理天数',
+                'total_process_days': '总处理天数', 'ProcessHours': '处理时长(小时)',
+                'ProcessDays': '处理时长(天)', 'user_count': '处理人数',
+                '工单数量': '工单数量', '审批数量': '审批数量',
+                '总耗时': '总耗时', 'avg_process_hours': '平均处理时长(小时)',
+            }
+            col_label = col_name_map.get(primary_col, primary_col)
+
+            device_info = {
+                primary_col: {
+                    "cn_desc": col_label,
+                    "room_name": "",
+                    "measure_label": col_label,
+                    "unit": "",
+                    "color": "#4fc3f7",
+                }
+            }
+            multi_data = {primary_col: ts_data}
+
+            if analysis_type == "threshold" and threshold is not None:
+                analysis_result = analyzer.analyze_threshold(ts_data, threshold, threshold_operator)
+                chart_config = analyzer.build_chart_config(
+                    multi_data, device_info, "threshold",
+                    {"threshold": threshold, "operator": threshold_operator}
+                )
+                op_desc = "超过" if threshold_operator == ">" else "低于"
+                summary = f"{col_label} {op_desc}{threshold}的次数: {analysis_result.get('exceed_count', 0)}次，累计持续: {analysis_result.get('total_duration_min', 0)}分钟"
+
+            elif analysis_type == "anomaly":
+                analysis_result = analyzer.analyze_anomaly(ts_data)
+                chart_config = analyzer.build_chart_config(
+                    multi_data, device_info, "anomaly",
+                    anomaly_data={primary_col: analysis_result}
+                )
+                summary = f"检测到{analysis_result.get('total_anomaly_events', 0)}个异常事件，检测器: {', '.join(analysis_result.get('detectors_used', []))}"
+
+            elif analysis_type == "trend":
+                analysis_result = analyzer.analyze_trend(ts_data)
+                chart_config = analyzer.build_chart_config(multi_data, device_info, "trend")
+                trend_desc = {"rising": "上升", "declining": "下降", "stable": "稳定"}
+                summary = f"{col_label}趋势: {trend_desc.get(analysis_result.get('trend', ''), '未知')}，总变化: {analysis_result.get('total_change', 0):.2f}"
+
+            elif analysis_type == "aggregation":
+                interval = "day" if len(ts_data) > 48 else "hour"
+                agg_result = analyzer.analyze_aggregation(ts_data, interval=interval)
+                analysis_result = agg_result
+                chart_config = analyzer.build_chart_config(
+                    multi_data, device_info, "aggregation",
+                    aggregation_data={primary_col: agg_result}
+                )
+                summary = f"{col_label}聚合统计: {len(agg_result)}个时段"
+
+            elif analysis_type == "comparison":
+                # 对比分析需要多列数据，用前两个数值列
+                if len(numeric_cols) >= 2:
+                    second_col = numeric_cols[1]
+                    second_label = col_name_map.get(second_col, second_col)
+                    ts_data_2 = []
+                    for row in data:
+                        dt_val = row.get(time_col)
+                        num_val = row.get(second_col)
+                        if dt_val is None or num_val is None:
+                            continue
+                        dt_str = str(dt_val).split('.')[0]
+                        try:
+                            ts_data_2.append({"datetime": dt_str, "value": float(num_val)})
+                        except (ValueError, TypeError):
+                            continue
+                    multi_data = {primary_col: ts_data, second_col: ts_data_2}
+                    device_info[second_col] = {
+                        "cn_desc": second_label, "room_name": "",
+                        "measure_label": second_label, "unit": "", "color": "#66bb6a",
+                    }
+                    analysis_result = analyzer.analyze_comparison(multi_data, device_info)
+                    chart_config = analyzer.build_chart_config(multi_data, device_info, "comparison")
+                    summary = f"{col_label} vs {second_label} 对比分析"
+                else:
+                    # 单列无法对比，降级为趋势
+                    analysis_result = analyzer.analyze_trend(ts_data)
+                    chart_config = analyzer.build_chart_config(multi_data, device_info, "trend")
+                    analysis_type = "trend"
+                    summary = f"{col_label}趋势分析"
+
+            else:
+                # raw: 基础统计
+                analysis_result = {"count": len(ts_data)}
+                chart_config = analyzer.build_chart_config(multi_data, device_info, "raw")
+                summary = f"{col_label}时序数据，共{len(ts_data)}个数据点"
+
+            logger.info(f"[AgentQueryEngine] 工单时序分析: type={analysis_type}, col={primary_col}, points={len(ts_data)}")
+
+            return {
+                "type": "workorder_analysis",
+                "analysis_type": analysis_type,
+                "analysis_result": analysis_result,
+                "device_info": device_info,
+                "chart_config": chart_config,
+                "primary_col": primary_col,
+                "col_label": col_label,
+                "time_col": time_col,
+                "summary": summary,
+            }
+
+        except Exception as e:
+            logger.warning(f"[AgentQueryEngine] 工单时序分析失败: {e}")
+            return None
 
     def _generate_summary(self, user_query: str, data: List[Dict]) -> Generator:
         """基于查询数据生成流式总结（只调用1次LLM）"""
@@ -1855,7 +2058,7 @@ ORDER BY 平均处理天数 ASC"""
 
         return params
 
-    def _fix_time_range(self, sql: str, user_query: str) -> str:
+    def _fix_time_range(self, sql: str, user_query: str, connection_name: str = None) -> str:
         """
         SQL后处理：检测用户查询中的时间意图，校验并修正SQL中的时间范围。
         解决LLM对"本周/本月"等时间关键词生成不一致的问题。
@@ -1996,8 +2199,11 @@ ORDER BY 平均处理天数 ASC"""
             if m:
                 matched = m.group(0)
                 prefix = "AND " if matched.startswith("AND ") or matched.startswith("and ") else ""
+                # 根据SQL是否查DW宽表选择时间字段
+                is_dw = bool(re.search(r'(FROM|JOIN)\s+dw_', sql, re.IGNORECASE))
+                time_field = "ApprovalTime" if is_dw else "wr.LASTSAVED"
                 sql = complex_pattern.sub(
-                    f"{prefix}wr.LASTSAVED BETWEEN '{expected_start}' AND '{expected_end}'",
+                    f"{prefix}{time_field} BETWEEN '{expected_start}' AND '{expected_end}'",
                     sql
                 )
                 fixed = True
@@ -2024,7 +2230,7 @@ ORDER BY 平均处理天数 ASC"""
                 # 判断SQL是否查询DW宽表（DW宽表用ApprovalTime，无别名前缀）
                 is_dw_query = bool(re.search(
                     r'(FROM|JOIN)\s+dw_', sql, re.IGNORECASE
-                ))
+                )) or connection_name == "DW"
                 if is_dw_query:
                     time_field = "ApprovalTime"
                 else:
@@ -2146,7 +2352,7 @@ ORDER BY 平均处理天数 ASC"""
 
         return sql
 
-    def _fix_group_by_for_employee(self, sql: str, user_query: str) -> str:
+    def _fix_group_by_for_employee(self, sql: str, user_query: str, connection_name: str = None) -> str:
         """
         SQL后处理：当用户查询"XX最多的员工"时，确保GROUP BY按员工分组。
         LLM可能错误地按工单类型(FLODESC)或其他维度分组。
@@ -2254,18 +2460,25 @@ ORDER BY 平均处理天数 ASC"""
             return sql
 
         # GROUP BY中没有员工字段，需要替换
-        # 查找SQL中是否有ATUSERS JOIN（有USRDESC可用）
-        alias = self._detect_wr_alias(sql)
-        has_atusers = bool(re.search(r'JOIN\s+ATUSERS', sql, re.IGNORECASE))
+        # 判断是否为DW宽表查询（DW宽表用EMPLOYEE_NAME，无别名前缀）
+        is_dw_query = bool(re.search(r'(FROM|JOIN)\s+dw_', sql, re.IGNORECASE)) or connection_name == "DW"
 
-        if has_atusers:
-            # 找到USRDESC的别名
-            au_match = re.search(r'ATUSERS\s+(\w+)', sql, re.IGNORECASE)
-            au_alias = au_match.group(1) if au_match else 'au'
-            new_group_by = f"{au_alias}.USRDESC"
+        if is_dw_query:
+            # DW宽表直接用EMPLOYEE_NAME字段
+            new_group_by = "EMPLOYEE_NAME"
         else:
-            # 没有JOIN ATUSERS，用CREATEDBY
-            new_group_by = f"{alias}.CREATEDBY"
+            # 查找SQL中是否有ATUSERS JOIN（有USRDESC可用）
+            alias = self._detect_wr_alias(sql)
+            has_atusers = bool(re.search(r'JOIN\s+ATUSERS', sql, re.IGNORECASE))
+
+            if has_atusers:
+                # 找到USRDESC的别名
+                au_match = re.search(r'ATUSERS\s+(\w+)', sql, re.IGNORECASE)
+                au_alias = au_match.group(1) if au_match else 'au'
+                new_group_by = f"{au_alias}.USRDESC"
+            else:
+                # 没有JOIN ATUSERS，用CREATEDBY
+                new_group_by = f"{alias}.CREATEDBY"
 
         # 替换GROUP BY
         sql = re.sub(
@@ -2291,7 +2504,9 @@ ORDER BY 平均处理天数 ASC"""
                 else:
                     # 只添加一次员工字段（去重）
                     if not employee_field_added:
-                        if has_atusers:
+                        if is_dw_query:
+                            new_parts.append("EMPLOYEE_NAME AS 员工姓名")
+                        elif has_atusers:
                             new_parts.append(f"{au_alias}.USRDESC AS 员工姓名")
                         else:
                             new_parts.append(f"{alias}.CREATEDBY AS 员工姓名")
@@ -2413,6 +2628,10 @@ ORDER BY 平均处理天数 ASC"""
                         auto_chart = self._auto_generate_chart(data, user_query)
                         if auto_chart:
                             yield auto_chart
+                        # 工单时序数据深度分析
+                        ts_event = self._try_timeseries_analysis(data, user_query)
+                        if ts_event:
+                            yield ts_event
                     # 直接生成总结
                     yield {"type": "thinking", "content": "正在生成回答..."}
                     yield from self._generate_summary(user_query, data)
@@ -2460,6 +2679,10 @@ ORDER BY 平均处理天数 ASC"""
                         auto_chart = self._auto_generate_chart(data, user_query)
                         if auto_chart:
                             yield auto_chart
+                        # 工单时序数据深度分析
+                        ts_event = self._try_timeseries_analysis(data, user_query)
+                        if ts_event:
+                            yield ts_event
 
                     # 存入语义缓存
                     try:
@@ -2607,6 +2830,10 @@ ORDER BY 平均处理天数 ASC"""
                             auto_chart = self._auto_generate_chart(tool_result_data["data"], user_query)
                             if auto_chart:
                                 yield auto_chart
+                            # 工单时序数据深度分析
+                            ts_event = self._try_timeseries_analysis(tool_result_data["data"], user_query)
+                            if ts_event:
+                                yield ts_event
                     elif tool_result_scada is not None:
                         result_content = safe_json_dumps(tool_result_scada, ensure_ascii=False)
                     else:
